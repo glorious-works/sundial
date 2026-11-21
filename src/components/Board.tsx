@@ -83,7 +83,7 @@ export function Board({ onHome }: { onHome: (text: { label: string; date: string
   useEffect(() => {
     writeStored(settings);
     const h = encodeHash(settings);
-    if (location.hash !== h) history.replaceState(null, "", h);
+    if (location.hash !== h) history.replaceState(null, "", h || location.pathname + location.search);
   }, [settings]);
   useEffect(() => {
     const onHash = () => setSettings(loadSettings(location.hash, Date.now()));
@@ -261,7 +261,7 @@ export function Board({ onHome }: { onHome: (text: { label: string; date: string
         {dayOverlap ? <OverlapText o={dayOverlap} rows={rows} /> : "Add a city to see the hours you share."}
       </p>
 
-      {editing && (
+      {(editing || others.length === 0) && (
         <div className="editbar">
           <CitySearch
             homeZone={home.zone}
@@ -269,11 +269,14 @@ export function Board({ onHome }: { onHome: (text: { label: string; date: string
             isOnBoard={(id) => settings.entries.some((e) => e.id === id)}
             onAdd={(c) => update((s) => addCity(s, c.id, cursor))}
           />
-          <label className="hint inline-flex items-center gap-2">
-            <input type="checkbox" checked={settings.labelsInLink} onChange={(e) => update((s) => ({ ...s, labelsInLink: e.target.checked }))} />
-            Put personal labels in the link
-          </label>
-          {settings.home && (
+          {others.length === 0 && !editing && <span className="hint">Add the cities you keep track of. Your board stays in this browser and its link.</span>}
+          {editing && (
+            <label className="hint inline-flex items-center gap-2">
+              <input type="checkbox" checked={settings.labelsInLink} onChange={(e) => update((s) => ({ ...s, labelsInLink: e.target.checked }))} />
+              Put personal labels in the link
+            </label>
+          )}
+          {editing && settings.home && (
             <button className="btn small" type="button" onClick={() => update((s) => ({ ...s, home: undefined }))}>
               Make this device&rsquo;s zone home
             </button>
@@ -316,7 +319,6 @@ export function Board({ onHome }: { onHome: (text: { label: string; date: string
           />
         ))}
       </section>
-      {others.length === 0 && <p className="hint pt-3">Only home is on the board. Edit the board to add cities.</p>}
 
       {toast && (
         <div className="toast" role="status">

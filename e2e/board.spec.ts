@@ -99,13 +99,17 @@ test.describe("home and today", () => {
     await expect(page.getByTestId("today")).toHaveText(today!);
   });
 
-  test("a first visit shows the home zone plus the default cities", async ({ page }, info) => {
+  test("a first visit shows only the home zone, with the city search open", async ({ page }, info) => {
     await open(page, Date.UTC(2026, 10, 21, 13, 18));
-    const names = await page.getByTestId("row").evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.name));
     const homeName = { [LON]: "London", [CHI]: "Chicago", [SYD]: "Sydney" }[info.project.name]!;
-    expect(names[0]).toBe(homeName);
-    expect(new Set(names)).toEqual(new Set([homeName, "London", "New York", "Sydney"]));
-    await expect(page).toHaveURL(/#cities=/);
+    await expect(page.getByTestId("row")).toHaveCount(1);
+    await expect(page.getByTestId("row")).toHaveAttribute("data-name", homeName);
+    await expect(page).toHaveURL(/\/$/);
+    const search = page.getByRole("combobox", { name: "Add a city" });
+    await search.fill("Delhi");
+    await search.press("Enter");
+    await expect(page.getByTestId("row")).toHaveCount(2);
+    await expect(page).toHaveURL(/#cities=delhi-in$/);
   });
 });
 

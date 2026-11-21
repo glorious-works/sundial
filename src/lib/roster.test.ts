@@ -35,11 +35,19 @@ const board = (ids: string[], extra: Partial<Settings> = {}): Settings => ({ ent
 const names = (s: Settings, zone: string) => resolveRows(s, zone).map((r) => r.name + (r.home ? "*" : ""));
 
 describe("rows", () => {
-  it("default roster is in offset order, and the browser's zone is home", () => {
+  it("a first visit shows only the home zone, from the browser", () => {
     const s = defaultSettings(NOV);
-    expect(s.entries.map((e) => e.id)).toEqual(["new-york-us", "london-gb", "sydney-au"]);
-    expect(names(s, "Europe/London")).toEqual(["London*", "New York", "Sydney"]);
-    expect(names(s, "Australia/Sydney")).toEqual(["Sydney*", "New York", "London"]);
+    expect(s.entries).toEqual([]);
+    expect(names(s, "Europe/London")).toEqual(["London*"]);
+    expect(names(s, "Australia/Sydney")).toEqual(["Sydney*"]);
+    expect(names(s, "America/Chicago")).toEqual(["Chicago*"]);
+    expect(names(s, "UTC")).toEqual(["UTC*"]);
+    expect(encodeHash(s)).toBe("");
+  });
+
+  it("other rows follow in order of offset as they are added", () => {
+    let s = defaultSettings(NOV);
+    for (const id of ["sydney-au", "london-gb", "new-york-us"]) s = addCity(s, id, NOV);
     expect(names(s, "America/Chicago")).toEqual(["Chicago*", "New York", "London", "Sydney"]);
   });
 

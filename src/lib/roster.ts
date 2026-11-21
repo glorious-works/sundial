@@ -17,8 +17,8 @@ export interface Settings {
   labelsInLink: boolean;
 }
 
-/** First visit: the home zone plus these. Pending Stephan's decision (spec, open question 4). */
-export const DEFAULT_ROSTER = ["london-gb", "new-york-us", "sydney-au"];
+/** First visit: the home zone and nothing else, so people add their own cities (Stephan, 21 Nov 2026). */
+export const DEFAULT_ROSTER: string[] = [];
 
 export const MAX_LABEL = 40;
 
@@ -55,8 +55,8 @@ const isUTC = (zone: string) => /^(UTC|GMT|Etc\/.*|Universal|Zulu)$/.test(zone);
 
 /**
  * The board's rows. Home is the chosen city, else the first city in the browser's zone, else
- * a row made from the browser's zone. A browser that reports only UTC gets no UTC row: the
- * first city on the board stands in as home.
+ * a row made from the browser's zone. A browser that reports only UTC gets no UTC row while the
+ * board has a city: the first one stands in as home.
  */
 export function resolveRows(s: Settings, browserZone: string): Row[] {
   const fromEntry = (e: Entry): Row => {
@@ -76,6 +76,7 @@ export function resolveRows(s: Settings, browserZone: string): Row[] {
   };
   const rows = s.entries.filter((e) => cityById(e.id)).map(fromEntry);
   let home = (s.home && rows.find((r) => r.key === s.home)) || rows.find((r) => r.zone === browserZone);
+  // A browser that reports only UTC: use the first city, and fall back to a UTC home row only when the board is empty.
   if (!home && isUTC(browserZone)) home = rows[0];
   if (!home) {
     const c: City | undefined = cityForZone(browserZone);
@@ -101,7 +102,9 @@ function encodeEntry(e: Entry, label: string | undefined): string {
   return out;
 }
 
+/** The link's hash, or "" for an empty board with nothing to keep. */
 export function encodeHash(s: Settings): string {
+  if (!s.entries.length) return "";
   const parts = [`cities=${s.entries.map((e) => encodeEntry(e, s.labelsInLink ? s.labels[e.id] : undefined)).join(",")}`];
   if (s.home && s.entries.some((e) => e.id === s.home)) parts.push(`home=${s.home}`);
   return "#" + parts.join("&");
