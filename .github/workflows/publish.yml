@@ -58,8 +58,15 @@ jobs:
             echo "Nothing new to publish."
           fi
 
+      # SiteGround's bot protection can answer 202 (a challenge page) to an automated request
+      # just after the cache flush, so retry; a lasting 202 is a warning, anything else a failure.
       - name: Check the live page
         run: |
-          code=$(curl -s -o /dev/null -w '%{http_code}' https://glorious.works/sundial/)
-          echo "glorious.works/sundial/ answered $code"
-          [ "$code" = 200 ]
+          for i in 1 2 3 4 5 6; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' https://glorious.works/sundial/)
+            echo "glorious.works/sundial/ answered $code"
+            [ "$code" = 200 ] && exit 0
+            [ "$code" = 202 ] || exit 1
+            sleep 10
+          done
+          echo "::warning::SiteGround kept answering 202, its bot check, so the live page could not be confirmed. Open https://glorious.works/sundial/ to check."
