@@ -24,6 +24,8 @@ Sundial, a time zone board for Glorious Works: every row keeps its own date, and
 - `src/lib/strip.ts`: everything a strip draws. `cursorDay` is what the first-render regression tests check.
 - `src/lib/roster.ts`: the board's settings, `DEFAULT_ROSTER`, the link format (`#cities=london-gb,sydney-au@0800-1630~Label&home=london-gb`) and localStorage (`sundial:v1`).
 - `src/lib/cities.ts`, `src/data/cities.json`: the curated city list and search.
+- `src/app/icon.svg`, `src/app/favicon.ico`, `src/app/apple-icon.png`: **copies** of the favicons in `glorious-works/brand` (`logo/favicon/`). Never edit them here: change the master there, rebuild, then recopy (the brand README lists Sundial among the copies).
+- `src/app/layout.tsx`: fonts, metadata and GoatCounter's page-view pixel (production builds only; it names the path `/sundial/`, never the hash, and Playwright blocks it so tests count nothing).
 - `src/components/Sundial.tsx`: the page shell; the board mounts only after hydration. `Board.tsx` (rows, cursor, editing), `drawStrip.ts` (canvas), `CitySearch.tsx`.
 - `e2e/board.spec.ts`, `playwright.config.ts`: Playwright, one project per zone (Europe/London, America/Chicago, Australia/Sydney). `e2e/serve.mjs` serves `out/` at `/sundial/` for it, the way SiteGround does (`npm run serve` to look at the export by hand).
 - `.github/workflows/ci.yml` (the `check` job) and `.github/workflows/publish.yml` (deploys `main` to SiteGround).

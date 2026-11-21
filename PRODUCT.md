@@ -33,7 +33,7 @@ A time zone board that makes the moving arithmetic of time zones unnecessary: on
 
 ## Capabilities and Constraints
 
-- Static page: a Next.js static export served as plain files at glorious.works/sundial on SiteGround. No server code, no database, no environment variables, no analytics.
+- Static page: a Next.js static export served as plain files at glorious.works/sundial on SiteGround. No server code, no database and no environment variables. Page views are counted by GoatCounter's tracking pixel, as on the rest of glorious.works: the path only, never the board, and no cookies.
 - Every time renders client-side after hydration; nothing time-dependent may be rendered at build.
 - Date arithmetic on instants, wall time from the zone as the last step; the spec's acceptance tables (`docs/spec.md`) define correctness and are tested in Vitest and in Playwright with the browser in London, Chicago and Sydney.
 - Out of scope for v1: accounts or sync beyond the link, calendar integration, meeting polls, per-person availability, notifications, a native app.

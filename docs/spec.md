@@ -1,6 +1,6 @@
 # Sundial spec
 
-Draft, 21 November 2026. Sundial is a Glorious Works web app, at glorious.works/sundial, that does what everytimezone does, with two faults fixed: every row shows its own date, and the timeline is coloured by the real sky over each city. The name is a working title.
+Written 21 November 2026; live at glorious.works/sundial since the same day. Sundial is a Glorious Works web app, at glorious.works/sundial, that does what everytimezone does, with two faults fixed: every row shows its own date, and the timeline is coloured by the real sky over each city. The name is a working title.
 
 ## Why
 
@@ -24,9 +24,9 @@ Checked on Saturday 21 November 2026, in a logged-in view with a custom city lis
 ## The board
 
 - **Rows.** Each row shows its label (city, plus an optional personal label), the local time at the cursor in large type, weekday and date (with "+1 day" or "−1 day" when it differs from home), an offset badge ("+11h"), and the sky state and working status at the cursor ("Twilight · off work"). Beside it sits a horizontal strip with the row's own midnights marked and labelled "Sun 22 Nov"; the day containing the strip's left edge keeps a sticky label.
-- **Home.** The browser's zone (`Intl.DateTimeFormat().resolvedOptions().timeZone`) is the home row, pinned first, with a manual override. Other rows follow in order of offset.
+- **Home.** The browser's zone (`Intl.DateTimeFormat().resolvedOptions().timeZone`) is the home row, pinned first, with a manual override. Other rows follow in order of offset as they are added, and can be reordered. There is no UTC row: a browser that reports only UTC takes the first city on the board as home.
 - **Default roster.** A first visit shows only the home zone, with the city search open, so people add the cities they keep track of (Stephan, 21 Nov 2026). Anyone's own roster lives in their link.
-- **Cursor.** One cursor, fixed at the centre of every strip, starts at now and follows the clock. Drag a strip or scroll sideways to move time, click a moment to centre it, use the arrow keys for 15 minutes (Shift for an hour), and press Now to return. Every row's time, weekday and date update with it.
+- **Cursor.** One cursor, fixed at the centre of every strip, starts at now and follows the clock. Drag a strip or scroll sideways to move time, click a moment to centre it, use the arrow keys for 15 minutes (Shift for an hour), and press Back to now (or Home) to return. Every row's time, weekday and date update with it. A moved cursor is never quiet (Stephan, 21 Nov 2026): the times shade, a "Back to now" button says how far from now the cursor is ("+3h 15m"), dates outside the current year carry the year, and coming back to the page after 30 minutes away returns it to now.
 - **Colour model.** Sun elevation is calculated client-side for each slice of the strip and each city's coordinates, then mapped to bands that blend into a gradient rather than blocks. Palette, from the Glorious Works brand:
 
   | Sun elevation | Band | Colour |
@@ -40,7 +40,7 @@ Checked on Saturday 21 November 2026, in a logged-in view with a custom city lis
 - **Working hours.** A bar under each strip, 09:00 to 17:30 Monday to Friday by default and editable per row, absent at weekends.
 - **Overlap.** Columns where every row is inside working hours are highlighted. When there are none, the board says so and falls back to shared waking hours, 07:00 to 22:00 by default. For London, Chicago and Sydney in November that fallback finds London 20:00 to 22:00, which is Sydney 07:00 to 09:00 the next morning and Chicago 14:00 to 16:00. When there are no shared waking hours either, the board names the best time instead: the quarter hours that leave the rows least far outside waking hours in total, the middle of the longest such run, and who is up early, up late or asleep then (Stephan, 21 Nov 2026). For London, New York, Delhi, Tokyo and Sydney on Sat 21 Nov 2026 that is 11:30 London, with New York up early (06:30) and Sydney up late (22:30).
 - **Gap changes.** When any row's offset from home changes within the next four weeks of the cursor, a line under the row says when and to what, for example "Gap becomes +9h on Sat 3 Apr at 17:00 London time". Days of 23 and 25 hours render at their true length.
-- **Copy a time.** A one-line summary of the cursor time, ready to paste, for example "Mon 23 Nov, 07:00 London / 18:00 Sydney / 01:00 Chicago". Rows whose date differs from home's carry their date in brackets.
+- **Copy a time.** A one-line summary of the cursor time, ready to paste, for example "Mon 23 Nov, 07:00 London / 18:00 Sydney / 01:00 Chicago". Rows whose date differs from home's carry their date in brackets. When the cursor is in another year than now, the dates carry the year.
 - **Adding a city.** A search box over a curated city list holding name, country, IANA zone and coordinates. Abbreviations such as AEDT are displayed but never accepted as input, since they are ambiguous.
 - **Phone.** Each label stacks above its strip, and the layout must work at 375px, because a phone is where most checking happens.
 
@@ -78,8 +78,9 @@ Delhi never changes its clocks, so its gap moves only when London's does.
 ## Stack
 
 - **App:** Next.js (App Router), TypeScript and Tailwind, as one static page with no API routes, no database and no environment variables.
-- **Time:** the Temporal API, with a polyfill where the browser lacks it, or `Intl.DateTimeFormat` offsets as the prototype does; either way the acceptance tests decide.
-- **Sun:** `astronomy-engine`, or the prototype's low-precision solar position if it stays within a fraction of a degree.
+- **Time:** `Intl.DateTimeFormat` offsets, as the prototype does (built 21 Nov 2026; the Temporal API was the alternative). The acceptance tests decide either way.
+- **Sun:** the prototype's low-precision solar position, which stays within 0.1° of `astronomy-engine` from 2026 to 2028 (checked in its unit test, where `astronomy-engine` is a dev dependency only).
+- **Page views:** GoatCounter's tracking pixel, as on the rest of glorious.works (Stephan, 21 Nov 2026): one image naming the path `/sundial/` and nothing else, so no board leaves the browser. No cookies and no analytics script.
 - **Cities:** a curated JSON list, small enough to ship with the page and grown on demand.
 - **State:** the roster in the URL hash, which browsers never send to the server, mirrored to `localStorage`. Personal labels stay in `localStorage` unless the user chooses to put them in a link. One bookmarked link per device replaces an account.
 - **Type:** Barlow, Barlow Condensed and League Gothic, as on glorious.works.
