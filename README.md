@@ -7,7 +7,7 @@ A time zone board for [Glorious Works](https://glorious.works), at [glorious.wor
 - Gaps that change within four weeks are announced, and 23- and 25-hour days are drawn at their true length.
 - The board lives in the page's link and in your browser. There is no account and nothing is stored on a server.
 
-The spec is [docs/spec.md](docs/spec.md).
+Its page in Works, [glorious.works/works/sundial](https://glorious.works/works/sundial/), says what it does, what it keeps and where it goes wrong. The spec is [docs/spec.md](docs/spec.md).
 
 ## Run it
 
