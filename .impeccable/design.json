@@ -1,0 +1,450 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-21T15:27:02Z",
+  "title": "Design System: Sundial",
+  "extensions": {
+    "colorMeta": {
+      "signal-yellow": {
+        "role": "primary",
+        "displayName": "Signal Yellow",
+        "canonical": "oklch(86.2% 0.148 85.0)",
+        "tonalRamp": [
+          "#130900",
+          "#342300",
+          "#584106",
+          "#80610C",
+          "#AC820A",
+          "#C9A966",
+          "#E5CEA1",
+          "#FBEDD0"
+        ]
+      },
+      "ink": {
+        "role": "primary",
+        "displayName": "Ink",
+        "canonical": "oklch(23.5% 0.000 89.9)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#262626",
+          "#454545",
+          "#666666",
+          "#898989",
+          "#AEAEAE",
+          "#D1D1D1",
+          "#EEEEEE"
+        ]
+      },
+      "tomato": {
+        "role": "secondary",
+        "displayName": "Tomato",
+        "canonical": "oklch(56.0% 0.181 32.0)",
+        "tonalRamp": [
+          "#1B0301",
+          "#490F06",
+          "#7B2011",
+          "#B2321D",
+          "#D65F4A",
+          "#ED9280",
+          "#FCC1B4",
+          "#FEE9E5"
+        ]
+      },
+      "cream": {
+        "role": "neutral",
+        "displayName": "Cream",
+        "canonical": "oklch(98.0% 0.024 88.2)",
+        "tonalRamp": [
+          "#0C0B08",
+          "#292620",
+          "#49453B",
+          "#6B6658",
+          "#8E897C",
+          "#B2AEA3",
+          "#D4D1CA",
+          "#F0EEEA"
+        ]
+      },
+      "deep-night": {
+        "role": "tertiary",
+        "displayName": "Deep Night",
+        "canonical": "oklch(24.9% 0.104 266.7)",
+        "tonalRamp": [
+          "#060B17",
+          "#1B253F",
+          "#33436D",
+          "#4D649D",
+          "#7188BF",
+          "#9BADD9",
+          "#C3D1F0",
+          "#E7EEFF"
+        ]
+      },
+      "night-cobalt": {
+        "role": "tertiary",
+        "displayName": "Night Cobalt",
+        "canonical": "oklch(32.7% 0.139 266.4)",
+        "tonalRamp": [
+          "#050A1B",
+          "#172447",
+          "#2C4179",
+          "#4461AF",
+          "#6886D1",
+          "#94ADE7",
+          "#BFD1FA",
+          "#E8EFFE"
+        ]
+      },
+      "twilight-cobalt": {
+        "role": "tertiary",
+        "displayName": "Twilight Cobalt",
+        "canonical": "oklch(53.0% 0.176 265.6)",
+        "tonalRamp": [
+          "#03091F",
+          "#122350",
+          "#243F87",
+          "#385EC2",
+          "#5D84E4",
+          "#8CACF5",
+          "#BED1FB",
+          "#E7EFFF"
+        ]
+      },
+      "dawn-rose": {
+        "role": "tertiary",
+        "displayName": "Dawn Rose",
+        "canonical": "oklch(65.7% 0.161 8.1)",
+        "tonalRamp": [
+          "#1A0308",
+          "#45111F",
+          "#752339",
+          "#A93755",
+          "#CD6179",
+          "#E692A1",
+          "#FBBEC8",
+          "#FEE8EB"
+        ]
+      },
+      "dawn-amber": {
+        "role": "tertiary",
+        "displayName": "Dawn Amber",
+        "canonical": "oklch(73.5% 0.142 44.1)",
+        "tonalRamp": [
+          "#180501",
+          "#411905",
+          "#6F2F0E",
+          "#A1481A",
+          "#C56F48",
+          "#DF9C7F",
+          "#F5C5B0",
+          "#FEEAE1"
+        ]
+      },
+      "dusk-orange": {
+        "role": "tertiary",
+        "displayName": "Dusk Orange",
+        "canonical": "oklch(65.9% 0.170 42.6)",
+        "tonalRamp": [
+          "#1A0400",
+          "#461400",
+          "#732C09",
+          "#A64312",
+          "#D0673A",
+          "#E89776",
+          "#FCC2AB",
+          "#FEEAE2"
+        ]
+      },
+      "high-sun": {
+        "role": "tertiary",
+        "displayName": "High Sun",
+        "canonical": "oklch(92.4% 0.090 87.8)",
+        "tonalRamp": [
+          "#0F0A02",
+          "#2F250A",
+          "#534318",
+          "#7A6327",
+          "#9D8751",
+          "#BDAC85",
+          "#DCD0B4",
+          "#F5EEDC"
+        ]
+      },
+      "bench-umber": {
+        "role": "neutral",
+        "displayName": "Bench Umber",
+        "canonical": "oklch(48.1% 0.029 86.9)",
+        "tonalRamp": [
+          "#0D0B08",
+          "#29261E",
+          "#4A4438",
+          "#6D6554",
+          "#908878",
+          "#B3ADA1",
+          "#D5D1C8",
+          "#F1EEE8"
+        ]
+      },
+      "parchment-rule": {
+        "role": "neutral",
+        "displayName": "Parchment Rule",
+        "canonical": "oklch(89.0% 0.041 88.2)",
+        "tonalRamp": [
+          "#0D0B06",
+          "#2A261B",
+          "#4B4433",
+          "#6F654D",
+          "#928872",
+          "#B5AD9C",
+          "#D6D1C4",
+          "#F1EEE6"
+        ]
+      },
+      "pale-wheat": {
+        "role": "neutral",
+        "displayName": "Pale Wheat",
+        "canonical": "oklch(93.2% 0.044 89.9)",
+        "tonalRamp": [
+          "#0D0B06",
+          "#2A261A",
+          "#4B4432",
+          "#6F654B",
+          "#928970",
+          "#B5AE9A",
+          "#D6D1C3",
+          "#F1EEE6"
+        ]
+      },
+      "night-bench": {
+        "role": "neutral",
+        "displayName": "Night Bench",
+        "canonical": "oklch(18.9% 0.021 271.4)",
+        "tonalRamp": [
+          "#0A0B0E",
+          "#24262C",
+          "#42454D",
+          "#626672",
+          "#858994",
+          "#ABAEB7",
+          "#CFD1D7",
+          "#EDEEF2"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The wordmark on a first visit."
+      },
+      "wordmark": {
+        "displayName": "Wordmark",
+        "purpose": "The wordmark in the slim bar once the board has cities."
+      },
+      "reading": {
+        "displayName": "Reading",
+        "purpose": "Each row's local time; the largest thing in a row."
+      },
+      "today": {
+        "displayName": "Today",
+        "purpose": "Today's date in home time, the only page-level date."
+      },
+      "today-compact": {
+        "displayName": "Today (bar)",
+        "purpose": "Today's date in the slim bar."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Each row's weekday and date."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "City names, in spaced capitals."
+      },
+      "control": {
+        "displayName": "Control",
+        "purpose": "Buttons."
+      },
+      "control-small": {
+        "displayName": "Control (small)",
+        "purpose": "Row actions in the edit panel."
+      },
+      "tick": {
+        "displayName": "Tick",
+        "purpose": "Hour ticks in the strips."
+      },
+      "lede": {
+        "displayName": "Lede",
+        "purpose": "The sentence under the wordmark on a first visit."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Copy line, overlap line, help."
+      },
+      "meta": {
+        "displayName": "Meta",
+        "purpose": "Sky and work state, gap notes, legend, hints."
+      }
+    },
+    "shadows": [
+      {
+        "name": "lift",
+        "value": "0 3px 10px rgba(30, 30, 30, 0.16)",
+        "purpose": "A button under the pointer (0 3px 12px rgba(0,0,0,.5) in dark)."
+      },
+      {
+        "name": "float",
+        "value": "0 8px 24px rgba(0, 0, 0, 0.12)",
+        "purpose": "Search results and the toast (0.5 alpha in dark)."
+      }
+    ],
+    "motion": [
+      {
+        "name": "press",
+        "value": "120ms cubic-bezier(0.2, 0.8, 0.2, 1)",
+        "purpose": "Button lift and press; transform drops under reduced motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "phone",
+        "value": "640px"
+      },
+      {
+        "name": "strip-24h",
+        "value": "520px"
+      },
+      {
+        "name": "strip-36h",
+        "value": "900px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "The tactile pill: lifts on hover, presses in when used.",
+      "html": "<button class=\"ds-btn\">−1h</button>",
+      "css": ".ds-btn{font:600 14px var(--cond);text-transform:uppercase;letter-spacing:.06em;min-height:40px;padding:8px 16px;border-radius:999px;border:1.5px solid var(--ink);background:var(--ground);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:transform 120ms cubic-bezier(.2,.8,.2,1),box-shadow 120ms cubic-bezier(.2,.8,.2,1),background-color 120ms ease-out}.ds-btn:hover{background:var(--chip);transform:translateY(-1px);box-shadow:var(--lift)}.ds-btn:active{transform:translateY(1px);box-shadow:none;background:var(--rule)}.ds-btn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}"
+    },
+    {
+      "name": "Solid button",
+      "kind": "button",
+      "refersTo": "button-solid",
+      "description": "A mode that is on: Done while editing.",
+      "html": "<button class=\"ds-btn ds-btn-solid\">Done</button>",
+      "css": ".ds-btn{font:600 14px var(--cond);text-transform:uppercase;letter-spacing:.06em;min-height:40px;padding:8px 16px;border-radius:999px;border:1.5px solid var(--ink);background:var(--ground);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:transform 120ms cubic-bezier(.2,.8,.2,1),box-shadow 120ms cubic-bezier(.2,.8,.2,1),background-color 120ms ease-out}.ds-btn:hover{background:var(--chip);transform:translateY(-1px);box-shadow:var(--lift)}.ds-btn:active{transform:translateY(1px);box-shadow:none;background:var(--rule)}.ds-btn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.ds-btn-solid,.ds-btn-solid:hover{background:var(--ink);color:var(--ground)}"
+    },
+    {
+      "name": "Live",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "The quiet state: the board follows the clock.",
+      "html": "<button class=\"ds-btn ds-btn-live\" aria-label=\"Live: showing now\"><span class=\"ds-dot\"></span>Live</button>",
+      "css": ".ds-btn{font:600 14px var(--cond);text-transform:uppercase;letter-spacing:.06em;min-height:40px;padding:8px 16px;border-radius:999px;border:1.5px solid var(--ink);background:var(--ground);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:transform 120ms cubic-bezier(.2,.8,.2,1),box-shadow 120ms cubic-bezier(.2,.8,.2,1),background-color 120ms ease-out}.ds-btn:hover{background:var(--chip);transform:translateY(-1px);box-shadow:var(--lift)}.ds-btn:active{transform:translateY(1px);box-shadow:none;background:var(--rule)}.ds-btn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.ds-btn-live{border-color:var(--rule)}.ds-dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}"
+    },
+    {
+      "name": "Back to now",
+      "kind": "button",
+      "refersTo": "button-back-to-now",
+      "description": "The loud state: the cursor is not now, and how far away it is.",
+      "html": "<button class=\"ds-btn ds-btn-now\">Back to now<span class=\"ds-far\">+3h 15m</span></button>",
+      "css": ".ds-btn{font:600 14px var(--cond);text-transform:uppercase;letter-spacing:.06em;min-height:40px;padding:8px 16px;border-radius:999px;border:1.5px solid var(--ink);background:var(--ground);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:transform 120ms cubic-bezier(.2,.8,.2,1),box-shadow 120ms cubic-bezier(.2,.8,.2,1),background-color 120ms ease-out}.ds-btn:hover{background:var(--chip);transform:translateY(-1px);box-shadow:var(--lift)}.ds-btn:active{transform:translateY(1px);box-shadow:none;background:var(--rule)}.ds-btn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.ds-btn-now,.ds-btn-now:hover{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}.ds-far{font-variant-numeric:tabular-nums;padding-left:8px;border-left:1px solid color-mix(in srgb,var(--on-accent) 45%,transparent)}"
+    },
+    {
+      "name": "Small button",
+      "kind": "button",
+      "refersTo": "button-small",
+      "description": "Row actions in the edit panel.",
+      "html": "<button class=\"ds-btn ds-btn-small\">Make home</button>",
+      "css": ".ds-btn{font:600 14px var(--cond);text-transform:uppercase;letter-spacing:.06em;min-height:40px;padding:8px 16px;border-radius:999px;border:1.5px solid var(--ink);background:var(--ground);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:transform 120ms cubic-bezier(.2,.8,.2,1),box-shadow 120ms cubic-bezier(.2,.8,.2,1),background-color 120ms ease-out}.ds-btn:hover{background:var(--chip);transform:translateY(-1px);box-shadow:var(--lift)}.ds-btn:active{transform:translateY(1px);box-shadow:none;background:var(--rule)}.ds-btn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}.ds-btn-small{font-size:13px;min-height:32px;padding:5px 12px}"
+    },
+    {
+      "name": "City search",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "The add-a-city field under the board.",
+      "html": "<input class=\"ds-field\" type=\"search\" placeholder=\"Add a city, such as Tokyo\">",
+      "css": ".ds-field{font:500 15px var(--body);color:var(--ink);background:var(--field);border:1.5px solid var(--muted);border-radius:6px;padding:7px 12px;min-height:40px;width:280px;caret-color:var(--accent)}.ds-field::placeholder{color:var(--muted)}.ds-field:focus-visible{outline:2px solid var(--accent);outline-offset:3px}"
+    },
+    {
+      "name": "Offset badge",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "A row's gap from home; Tomato for Home.",
+      "html": "<span class=\"ds-badge\">+11h</span> <span class=\"ds-badge ds-badge-home\">HOME</span>",
+      "css": ".ds-badge{font:600 12px var(--cond);padding:1px 7px;border-radius:4px;background:var(--chip);color:var(--ink);letter-spacing:.04em;font-variant-numeric:tabular-nums}.ds-badge-home{background:var(--accent);color:var(--on-accent)}"
+    },
+    {
+      "name": "Row label",
+      "kind": "custom",
+      "refersTo": "reading",
+      "description": "City, badge, time, date and state: the reading for one city.",
+      "html": "<div class=\"ds-row\"><div class=\"ds-city\">Sydney <span class=\"ds-b\">+11h</span></div><div class=\"ds-time\">00:13</div><div class=\"ds-date\">Sun 22 Nov<span class=\"ds-rel\">+1 day</span></div><div class=\"ds-state\"><i></i>Night · weekend</div></div>",
+      "css": ".ds-row{color:var(--ink)}.ds-city{font:600 14px var(--cond);text-transform:uppercase;letter-spacing:.08em;display:flex;gap:8px;align-items:center}.ds-b{font:600 12px var(--cond);padding:1px 7px;border-radius:4px;background:var(--chip);letter-spacing:.04em}.ds-time{font:400 46px/1 var(--display);font-variant-numeric:tabular-nums;margin-top:2px}.ds-date{font:600 17px var(--cond)}.ds-rel{color:var(--accent);margin-left:4px}.ds-state{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--muted)}.ds-state i{width:12px;height:12px;border-radius:3px;background:#142A7A;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink) 18%,transparent)}"
+    },
+    {
+      "name": "Sky strip",
+      "kind": "custom",
+      "refersTo": "rounded.strip",
+      "description": "The sun's real elevation as colour, with midnights, working hours and the fixed cursor (drawn on canvas; this is a static sample).",
+      "html": "<div class=\"ds-strip\"><div class=\"ds-sky\"></div><div class=\"ds-bar\"></div><div class=\"ds-cur\"></div></div>",
+      "css": ".ds-strip{position:relative;width:320px;height:78px}.ds-sky{position:absolute;top:20px;left:0;right:0;height:34px;border-radius:7px;background:linear-gradient(90deg,#0B1A52 0%,#142A7A 18%,#3A62D0 26%,#E0607E 31%,#F2895A 34%,#FEC94E 40%,#FFE3A0 55%,#FEC94E 68%,#E4672E 73%,#C83C25 76%,#3A62D0 82%,#142A7A 90%,#0B1A52 100%)}.ds-bar{position:absolute;top:58px;left:38%;width:30%;height:4px;background:var(--ink)}.ds-cur{position:absolute;top:0;left:159px;width:2px;height:63px;background:var(--ink)}.ds-cur::before{content:\"\";position:absolute;top:0;left:-5px;border:6px solid transparent;border-top:7px solid var(--accent);border-bottom:0}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Instrument on the Bench",
+    "overview": "Sundial is an instrument made on the Signal Bench, the workshop glorious.works describes. The page opens with the brand band in Signal Yellow, the wordmark in League Gothic and today's date in home time, and below it the instrument itself: a column of readings, one row per city, each with its own large time, its own weekday and date, and a strip of real sky running through a fixed cursor. The readings are the point; everything else is a tool for moving them.\n\nWhen the cursor leaves now, the instrument goes into shade: the readings drop to Bench Umber and a Tomato \"Back to now\" names how far away the cursor is. The live board needs no announcement; the moved one always says so.\n\nThe page is calm and dense in the way a good gauge is: a lot of information, each piece in one place, nothing repeated for effect. Colour is rationed by meaning. The sky ramp belongs to the strips, where it is data (the sun's real elevation over that city), and Tomato marks what needs a look. The interface around the readings is quiet print on Cream, with controls that feel like real switches: firm, clearly pressed, never decorative.\n\nSundial rejects two looks outright: everytimezone's uniform grey day pills with floating date labels, where colour means nothing and the date has to be hunted for, and dashboard chrome, the cards, gradients and widget tiles of a generic SaaS panel.",
+    "keyCharacteristics": [
+      "One column of readings; the time in League Gothic is the largest thing in each row.",
+      "The sky ramp appears only in the strips and their swatches, and always means the sun.",
+      "Working hours are a separate ink bar, so shape and colour never compete.",
+      "Tomato marks attention: the cursor, home, a date that differs, a gap about to change, hours everyone shares.",
+      "Controls are tactile pills that lift on hover and press in when used.",
+      "Not now is never quiet: shaded readings and a Tomato \"Back to now\" with the distance.",
+      "Light and dark themes share every rule; only the ground and neutrals change."
+    ],
+    "rules": [
+      {
+        "name": "The Sky Is Data Rule",
+        "body": "The sky ramp is never decoration. It appears only in a strip or a swatch, and there it always means the sun's real elevation over that city at that moment. A zone without coordinates gets a neutral striped strip instead of a guessed sky.",
+        "section": "colors"
+      },
+      {
+        "name": "The Look Here Rule",
+        "body": "Tomato means \"look here\": the cursor, home, a date that differs from home, a gap about to change, shared hours, focus. It is never used for decoration, headings or plain emphasis.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Time Rule",
+        "body": "Every time and offset is set with tabular figures, so readings do not jitter as the cursor moves.",
+        "section": "typography"
+      },
+      {
+        "name": "The Year When It Matters Rule",
+        "body": "A date carries its year only when it is not in the current year for that row; the copy line then carries it too.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Readings Rule",
+        "body": "Nothing in a row lifts or casts a shadow. Lift belongs to things you press and things that float.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** work out every weekday and date from the row's own zone, and label each midnight on the strip with that row's date (\"Sun 22 Nov\").",
+      "**Do** keep the time the largest thing in each row, in League Gothic with tabular figures.",
+      "**Do** say in text what the strip shows in colour: the sky state and work state sit under every time.",
+      "**Do** keep Tomato for things that need a look, and keep the sky ramp inside the strips.",
+      "**Do** check every change at 375px and in the dark theme.",
+      "**Do** make a moved cursor obvious: shaded readings, a Tomato Back to now with the distance, and the year when it is not this year."
+    ],
+    "donts": [
+      "**Don't** use uniform grey day pills or float a date label mid-way along a day: everytimezone's look, where colour means nothing and the date must be hunted for.",
+      "**Don't** add dashboard chrome: cards around rows, gradients on the interface, widget tiles or decorative shadows.",
+      "**Don't** colour anything outside a strip with the sky ramp, or use Tomato as decoration.",
+      "**Don't** lift or shadow anything inside a row.",
+      "**Don't** bake text into images; every label is live text."
+    ]
+  }
+}

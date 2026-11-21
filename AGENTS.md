@@ -16,6 +16,7 @@ Sundial, a time zone board for Glorious Works: every row keeps its own date, and
 
 ## Key files
 - `docs/spec.md`: the spec. Its date rules and acceptance tables are mirrored in the unit and Playwright tests.
+- `PRODUCT.md`: product truth (users, positioning, constraints; WCAG 2.2 AA). `DESIGN.md`: the visual system, "The Instrument on the Bench"; its front matter is the token list the impeccable detector checks CSS against, so a new size, colour or radius goes in both. `.impeccable/design.json`: DESIGN.md's sidecar (tonal ramps, shadows, component snippets); regenerate it with DESIGN.md.
 - `docs/prototype.html`: Stephan's single-file prototype, where the sky palette and strip drawing are tuned first. **Git-ignored and never committed**: its city list is a personal roster.
 - `src/lib/time.ts`: instants, wall clocks per IANA zone (`Intl.DateTimeFormat` offsets), gap changes, day bounds (23- and 25-hour days), labels.
 - `src/lib/sun.ts`: low-precision solar elevation (checked against `astronomy-engine` in its test) and the sky colour stops.
@@ -34,6 +35,7 @@ Sundial, a time zone board for Glorious Works: every row keeps its own date, and
 - Every URL lives under `/sundial/`. Use relative or `basePath`-aware links (`next/link`, metadata files), never a bare `/path`.
 - City ids are part of every saved link: never rename or remove one. Add cities on demand; the unit test checks each zone is valid. Zone abbreviations are displayed, never accepted as search input.
 - Sky colour stops change in the prototype first, in light and dark themes, then here.
+- Impeccable (`/impeccable`) is installed locally and uncommitted (`.claude/skills/impeccable`, hooks in `.claude/settings.local.json`), so cloud sessions and fresh clones lack it; reinstall with `npx impeccable install --providers=claude --scope=project`. Its critique and audit reports in `.impeccable/critique/` and `.impeccable/audit/` ignore themselves; the first critique scored 28/40 and the audit 14/20 (21 Nov 2026), and polish cleared every priority issue from both.
 - The footer reads "Made with AI: colophon" and links to https://glorious.works/colophon/.
 - Commits are authored as `Glorious Works <hello@glorious.works>`, set in this repo's git config. Keep it. Merge PRs locally (`git merge --ff-only` on `main`, then push), never with GitHub's merge button or `gh pr merge`, which author the commit as whoever merges.
 - There is no global git credential helper, so push with `git -c credential.helper= -c 'credential.helper=!gh auth git-credential' push`.
