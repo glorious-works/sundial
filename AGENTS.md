@@ -54,6 +54,11 @@ Work on this repo happens both on Stephan's laptop and in Claude Code cloud sess
 - **At the start of a session:** run `git fetch`, then check whether the current branch is behind or ahead of its remote, whether the working tree has uncommitted changes, and whether there are open PRs (`gh pr list`) from other sessions. Report anything out of line before changing code. (Local sessions get this from a SessionStart hook; cloud sessions must do it themselves.)
 - **Before ending a session:** commit and push the work, or open a PR, so the other side can see it. If anything is left uncommitted or unpushed, say so.
 
+## Deploy (Vercel)
+- Vercel project `sundial` in Stephan's Hobby team (`stephanburns-projects`), live at https://sundial-orpin.vercel.app. The intended address is `sundial.glorious.works` (Stephan, 21 Nov 2026); its DNS at 123 Reg is Stephan's to set, and the domain is not yet added in Vercel.
+- **The GitHub repo is not connected to Vercel yet** (the Vercel GitHub app has no access to the glorious-works org), so pushes do not deploy. Until it is, deploy from an up-to-date `main` with `vercel deploy --prod --scope stephanburns-projects`.
+- `main` has a ruleset: the `check` job must pass on a commit before it can reach `main`, and force-pushes and deletion are blocked. Work on a branch, open a PR so CI runs, then `git merge --ff-only` it into `main` locally and push. Never enable auto-merge.
+
 ## Deploy checklist (Vercel)
 - Every env var the code reads is set **in Vercel** for Production (and Preview if used), not just in `.env.local`. Sundial reads none; keep it that way.
 - Read the `next build` route table: `○` = static, frozen at build time; `ƒ` = rendered per request. Sundial is deliberately `○`: nothing time-dependent renders on the server, and every time is filled in after hydration.
