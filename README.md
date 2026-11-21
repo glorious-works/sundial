@@ -1,6 +1,6 @@
 # Sundial
 
-A time zone board for [Glorious Works](https://glorious.works). Every row keeps its own date, and every strip is coloured by the real sun over that city.
+A time zone board for [Glorious Works](https://glorious.works), at [glorious.works/sundial](https://glorious.works/sundial/). Every row keeps its own date, and every strip is coloured by the real sun over that city.
 
 - Each row shows its local time, weekday and date, its gap from home, and whether it is light there and working hours.
 - Drag a strip, scroll sideways, click a moment or use the arrow keys to move time; every row moves together.
@@ -13,9 +13,9 @@ The spec is [docs/spec.md](docs/spec.md).
 
 ```bash
 npm ci
-npm run dev
+npm run dev   # then open http://localhost:3000/sundial/
 ```
 
-Checks: `./node_modules/.bin/tsc --noEmit`, `npm run lint`, `npm test`, then `npm run build && npm run test:e2e` (Playwright; first run `npx playwright install chromium`).
+Checks: `./node_modules/.bin/tsc --noEmit`, `npm run lint`, `npm test`, then `npm run build && npm run test:e2e` (Playwright against the static export; first run `npx playwright install chromium`). `npm run build` writes the export to `out/`, which is served as plain files under `/sundial/`.
 
 Made with AI: [colophon](https://glorious.works/colophon/). Licensed under the [MIT licence](LICENSE).

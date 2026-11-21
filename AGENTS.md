@@ -12,7 +12,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 Sundial, a time zone board for Glorious Works: every row keeps its own date, and every strip is coloured by the real sun over that city. `docs/spec.md` is the source of truth, and its acceptance tests define done for the date logic.
 
-**Stack:** Next.js 16 (App Router, `cacheComponents` on), TypeScript, Tailwind 4. One static page, no API routes, no database, no env vars. Hosting: Vercel.
+**Stack:** Next.js 16 (App Router) as a static export (`output: "export"`, `basePath: "/sundial"`), TypeScript, Tailwind 4. One static page, no API routes, no database, no env vars. Hosting: SiteGround, at https://glorious.works/sundial/ (Stephan, 21 Nov 2026), alongside the Hugo site from glorious-works/site.
 
 ## Key files
 - `docs/spec.md`: the spec. Its date rules and acceptance tables are mirrored in the unit and Playwright tests.
@@ -24,12 +24,14 @@ Sundial, a time zone board for Glorious Works: every row keeps its own date, and
 - `src/lib/roster.ts`: the board's settings, `DEFAULT_ROSTER`, the link format (`#cities=london-gb,sydney-au@0800-1630~Label&home=london-gb`) and localStorage (`sundial:v1`).
 - `src/lib/cities.ts`, `src/data/cities.json`: the curated city list and search.
 - `src/components/Sundial.tsx`: the page shell; the board mounts only after hydration. `Board.tsx` (rows, cursor, editing), `drawStrip.ts` (canvas), `CitySearch.tsx`.
-- `e2e/board.spec.ts`, `playwright.config.ts`: Playwright, one project per zone (Europe/London, America/Chicago, Australia/Sydney).
+- `e2e/board.spec.ts`, `playwright.config.ts`: Playwright, one project per zone (Europe/London, America/Chicago, Australia/Sydney). `e2e/serve.mjs` serves `out/` at `/sundial/` for it, the way SiteGround does (`npm run serve` to look at the export by hand).
+- `.github/workflows/ci.yml` (the `check` job) and `.github/workflows/publish.yml` (deploys `main` to SiteGround).
 
 ## Conventions and gotchas
 - Public repo: no real people's names, employers or personal rosters in code, defaults, test fixtures or commit history. Tests use cities and neutral labels such as "Office".
 - Date rules: all arithmetic on instants, wall time from the zone as the last step. No `new Date("YYYY-MM-DD")` and no hand-held offsets. A row's weekday and date come from its own zone, never from adding an offset to a shared date.
-- Nothing time-dependent renders on the server. `cacheComponents` makes `next build` fail if a prerender reads the clock, and a Playwright test checks the HTML holds no dates. The route table must show `/` as `○`.
+- Nothing time-dependent renders at build: the board mounts only after hydration, and a Playwright test checks the exported HTML holds no dates. The route table must show `/` as `○`; a static export fails the build on anything dynamic. (`cacheComponents`, which would also catch a prerender reading the clock, cannot be used with a static export.)
+- Every URL lives under `/sundial/`. Use relative or `basePath`-aware links (`next/link`, metadata files), never a bare `/path`.
 - City ids are part of every saved link: never rename or remove one. Add cities on demand; the unit test checks each zone is valid. Zone abbreviations are displayed, never accepted as search input.
 - Sky colour stops change in the prototype first, in light and dark themes, then here.
 - The footer reads "Made with AI: colophon" and links to https://glorious.works/colophon/.
@@ -45,7 +47,7 @@ npm ci
 npm run lint
 npm test
 npm run build
-npm run test:e2e   # Playwright against the build, in London, Chicago and Sydney
+npm run test:e2e   # Playwright against the export in out/, in London, Chicago and Sydney
 ```
 First run on a machine: `npx playwright install chromium`.
 
@@ -54,11 +56,11 @@ Work on this repo happens both on Stephan's laptop and in Claude Code cloud sess
 - **At the start of a session:** run `git fetch`, then check whether the current branch is behind or ahead of its remote, whether the working tree has uncommitted changes, and whether there are open PRs (`gh pr list`) from other sessions. Report anything out of line before changing code. (Local sessions get this from a SessionStart hook; cloud sessions must do it themselves.)
 - **Before ending a session:** commit and push the work, or open a PR, so the other side can see it. If anything is left uncommitted or unpushed, say so.
 
-## Deploy (Vercel)
-- Vercel project `sundial` in Stephan's Hobby team (`stephanburns-projects`), live at https://sundial-orpin.vercel.app. The intended address is `sundial.glorious.works` (Stephan, 21 Nov 2026); its DNS at 123 Reg is Stephan's to set, and the domain is not yet added in Vercel.
-- **The GitHub repo is not connected to Vercel yet** (the Vercel GitHub app has no access to the glorious-works org), so pushes do not deploy. Until it is, deploy from an up-to-date `main` with `vercel deploy --prod --scope stephanburns-projects`.
+## Deploy (SiteGround, at glorious.works/sundial)
+- **Publishing is the Publish workflow** (`.github/workflows/publish.yml`): on every push to `main`, and by hand from the Actions tab, it builds the export and rsyncs `out/` into `SG_PATH/sundial/` on SiteGround by checksum, with `--delete` confined to that folder, then flushes the SiteGround cache (domain id 1, as the site does) and checks that https://glorious.works/sundial/ answers 200. So **`main` is what is live**.
+- It needs the `SG_USER`, `SG_HOST`, `SG_PORT`, `SG_PATH`, `SG_DEPLOY_KEY` and `SG_KNOWN_HOSTS` secrets on this repo, the same values as glorious-works/site, ideally with a deploy key of its own; it fails with an error naming any that is missing.
+- The site repo's `deploy-exclude.txt` must list `/sundial/`, or the site's own `rsync --delete` removes Sundial on its next publish (every morning at 06:15 UTC).
+- SiteGround caches static files for a long time. Next.js fingerprints everything under `_next/static/`, and the workflow flushes the cache after any change, so `index.html` is fresh too. To check what visitors get, fetch the plain URL: a query string bypasses the cache.
 - `main` has a ruleset: the `check` job must pass on a commit before it can reach `main`, and force-pushes and deletion are blocked. Work on a branch, open a PR so CI runs, then `git merge --ff-only` it into `main` locally and push. Never enable auto-merge.
-
-## Deploy checklist (Vercel)
-- Every env var the code reads is set **in Vercel** for Production (and Preview if used), not just in `.env.local`. Sundial reads none; keep it that way.
-- Read the `next build` route table: `○` = static, frozen at build time; `ƒ` = rendered per request. Sundial is deliberately `○`: nothing time-dependent renders on the server, and every time is filled in after hydration.
+- The Vercel project `sundial` (team `stephanburns-projects`, https://sundial-orpin.vercel.app) was the first deploy. It is to be deleted once glorious.works/sundial is live (Stephan, 21 Nov 2026); it is not connected to the repo and gets nothing new.
+- Sundial reads no env vars and has no server, so there is nothing else to configure.

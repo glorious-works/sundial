@@ -1,0 +1,65 @@
+name: Publish
+
+# Builds the static export and deploys it to SiteGround at glorious.works/sundial/.
+# It runs on every push to main, so main is what is live, and by hand from the Actions tab.
+# The main ruleset only lets a commit onto main once CI's check has passed on it.
+# The site repo (glorious-works/site) lists /sundial/ in its deploy-exclude.txt, so the
+# site's own rsync --delete leaves this folder alone.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+      # Same SG_* secrets as the site's Publish workflow, set on this repo (ideally with a
+      # deploy key of its own, imported in SiteGround's SSH Keys Manager). Only out/ is
+      # synced, into SG_PATH/sundial/, and --delete is confined to that folder.
+      - name: Deploy to SiteGround
+        env:
+          SG_USER: ${{ secrets.SG_USER }}
+          SG_HOST: ${{ secrets.SG_HOST }}
+          SG_PORT: ${{ secrets.SG_PORT }}
+          SG_PATH: ${{ secrets.SG_PATH }}
+          SG_DEPLOY_KEY: ${{ secrets.SG_DEPLOY_KEY }}
+          SG_KNOWN_HOSTS: ${{ secrets.SG_KNOWN_HOSTS }}
+        run: |
+          for v in SG_USER SG_HOST SG_PORT SG_PATH SG_DEPLOY_KEY SG_KNOWN_HOSTS; do
+            if [ -z "${!v}" ]; then echo "::error::Secret $v is not set on this repository; nothing was deployed."; exit 1; fi
+          done
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SG_DEPLOY_KEY" > ~/.ssh/deploy
+          printf '%s\n' "$SG_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/deploy ~/.ssh/known_hosts
+          SSH="ssh -p $SG_PORT -i $HOME/.ssh/deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes"
+          rsync -rlcz --delete --itemize-changes \
+            -e "$SSH" out/ "$SG_USER@$SG_HOST:${SG_PATH%/}/sundial/" | tee "$RUNNER_TEMP/rsync.log"
+          if [ -s "$RUNNER_TEMP/rsync.log" ]; then
+            echo "Changes deployed; flushing the SiteGround cache."
+            $SSH "$SG_USER@$SG_HOST" 'site-tools-client domain-all update id=1 flush_cache=1'
+          else
+            echo "Nothing new to publish."
+          fi
+
+      - name: Check the live page
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' https://glorious.works/sundial/)
+          echo "glorious.works/sundial/ answered $code"
+          [ "$code" = 200 ]
