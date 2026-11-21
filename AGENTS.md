@@ -15,11 +15,24 @@ Sundial, a time zone board for Glorious Works: every row keeps its own date, and
 **Stack:** Next.js 16 (App Router, `cacheComponents` on), TypeScript, Tailwind 4. One static page, no API routes, no database, no env vars. Hosting: Vercel.
 
 ## Key files
-- `docs/spec.md`: the spec.
-- `docs/prototype.html`: Stephan's single-file prototype. **Git-ignored and never committed**: its city list is a personal roster.
+- `docs/spec.md`: the spec. Its date rules and acceptance tables are mirrored in the unit and Playwright tests.
+- `docs/prototype.html`: Stephan's single-file prototype, where the sky palette and strip drawing are tuned first. **Git-ignored and never committed**: its city list is a personal roster.
+- `src/lib/time.ts`: instants, wall clocks per IANA zone (`Intl.DateTimeFormat` offsets), gap changes, day bounds (23- and 25-hour days), labels.
+- `src/lib/sun.ts`: low-precision solar elevation (checked against `astronomy-engine` in its test) and the sky colour stops.
+- `src/lib/hours.ts`, `src/lib/board.ts`: working and waking hours, the overlap finder, the copy line, the gap note.
+- `src/lib/strip.ts`: everything a strip draws. `cursorDay` is what the first-render regression tests check.
+- `src/lib/roster.ts`: the board's settings, `DEFAULT_ROSTER`, the link format (`#cities=london-gb,sydney-au@0800-1630~Label&home=london-gb`) and localStorage (`sundial:v1`).
+- `src/lib/cities.ts`, `src/data/cities.json`: the curated city list and search.
+- `src/components/Sundial.tsx`: the page shell; the board mounts only after hydration. `Board.tsx` (rows, cursor, editing), `drawStrip.ts` (canvas), `CitySearch.tsx`.
+- `e2e/board.spec.ts`, `playwright.config.ts`: Playwright, one project per zone (Europe/London, America/Chicago, Australia/Sydney).
 
 ## Conventions and gotchas
-- Public repo: no real people's names, employers or personal rosters in code, defaults, test fixtures or commit history.
+- Public repo: no real people's names, employers or personal rosters in code, defaults, test fixtures or commit history. Tests use cities and neutral labels such as "Office".
+- Date rules: all arithmetic on instants, wall time from the zone as the last step. No `new Date("YYYY-MM-DD")` and no hand-held offsets. A row's weekday and date come from its own zone, never from adding an offset to a shared date.
+- Nothing time-dependent renders on the server. `cacheComponents` makes `next build` fail if a prerender reads the clock, and a Playwright test checks the HTML holds no dates. The route table must show `/` as `○`.
+- City ids are part of every saved link: never rename or remove one. Add cities on demand; the unit test checks each zone is valid. Zone abbreviations are displayed, never accepted as search input.
+- Sky colour stops change in the prototype first, in light and dark themes, then here.
+- The footer reads "Made with AI: colophon" and links to https://glorious.works/colophon/.
 - Commits are authored as `Glorious Works <hello@glorious.works>`, set in this repo's git config. Keep it. Merge PRs locally (`git merge --ff-only` on `main`, then push), never with GitHub's merge button or `gh pr merge`, which author the commit as whoever merges.
 - There is no global git credential helper, so push with `git -c credential.helper= -c 'credential.helper=!gh auth git-credential' push`.
 - Secrets live in a git-ignored `.env` / `.env.local`; `.env.example` lists every variable the code reads (none). Never put a secret in a command line or a committed file.
