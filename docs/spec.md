@@ -1,6 +1,6 @@
 # Sundial spec
 
-Draft, 21 November 2026. Sundial is a Glorious Works web app on Vercel that does what everytimezone does, with two faults fixed: every row shows its own date, and the timeline is coloured by the real sky over each city. The name is a working title.
+Draft, 21 November 2026. Sundial is a Glorious Works web app, at glorious.works/sundial, that does what everytimezone does, with two faults fixed: every row shows its own date, and the timeline is coloured by the real sky over each city. The name is a working title.
 
 ## Why
 
@@ -84,7 +84,7 @@ Delhi never changes its clocks, so its gap moves only when London's does.
 - **State:** the roster in the URL hash, which browsers never send to the server, mirrored to `localStorage`. Personal labels stay in `localStorage` unless the user chooses to put them in a link. One bookmarked link per device replaces an account.
 - **Type:** Barlow, Barlow Condensed and League Gothic, as on glorious.works.
 - **Tests:** Vitest and Playwright as above, run in CI.
-- **Hosting:** glorious.works/sundial (Stephan, 21 Nov 2026), on SiteGround beside the site: a Next.js static export with `basePath: "/sundial"`, deployed by the repo's own Publish workflow. Vercel served the first deploy and goes once the path is live.
+- **Hosting:** glorious.works/sundial (Stephan, 21 Nov 2026), on SiteGround beside the site: a Next.js static export with `basePath: "/sundial"`, deployed by the repo's own Publish workflow. Vercel served the first deploy and was deleted once the path was live (21 Nov 2026).
 
 ## Project conventions
 
