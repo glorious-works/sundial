@@ -11,7 +11,7 @@ const LONDON_HOME = `${BOARD}&home=london-gb`;
 
 async function open(page: Page, at: number, hash = "") {
   await page.clock.setFixedTime(new Date(at));
-  await page.goto("/" + hash);
+  await page.goto("./" + hash);
   await expect(page.locator("canvas.strip").first()).toHaveAttribute("data-cursor-day", /.+/);
 }
 
@@ -104,7 +104,7 @@ test.describe("home and today", () => {
     const homeName = { [LON]: "London", [CHI]: "Chicago", [SYD]: "Sydney" }[info.project.name]!;
     await expect(page.getByTestId("row")).toHaveCount(1);
     await expect(page.getByTestId("row")).toHaveAttribute("data-name", homeName);
-    await expect(page).toHaveURL(/\/$/);
+    await expect(page).toHaveURL(/\/sundial\/$/);
     const search = page.getByRole("combobox", { name: "Add a city" });
     await search.fill("Delhi");
     await search.press("Enter");
@@ -187,7 +187,7 @@ test.describe("editing and persistence", () => {
     await expect(page).toHaveURL(/sydney-au~Office/);
 
     // A bare address brings back this browser's board.
-    await page.goto("/");
+    await page.goto("./");
     await expect(page.getByTestId("row")).toHaveCount(3);
     await expect(page).toHaveURL(/#cities=london-gb,chicago-us@0800-1730,sydney-au~Office&home=london-gb$/);
     await expect(row(page, SYD).locator(".personal")).toHaveText("Office");
@@ -207,7 +207,7 @@ test.describe("static page", () => {
   test("ships no time: nothing time-dependent is in the HTML", async ({ browser }) => {
     const context = await browser.newContext({ javaScriptEnabled: false });
     const page = await context.newPage();
-    await page.goto("/");
+    await page.goto("./");
     const text = await page.locator("body").innerText();
     expect(text).not.toMatch(/\b(Mon|Tue|Wed|Thu|Fri|Sat|Sun) \d{1,2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/);
     expect(text).not.toMatch(/Today in/);
