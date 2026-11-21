@@ -1,0 +1,214 @@
+import { expect, test, type Page } from "@playwright/test";
+
+// docs/spec.md, "Date rules and acceptance tests": the same cases as the unit tests, run with
+// the browser's timezoneId set to each project's zone (see playwright.config.ts).
+
+const LON = "Europe/London";
+const SYD = "Australia/Sydney";
+const CHI = "America/Chicago";
+const BOARD = "#cities=london-gb,sydney-au,chicago-us";
+const LONDON_HOME = `${BOARD}&home=london-gb`;
+
+async function open(page: Page, at: number, hash = "") {
+  await page.clock.setFixedTime(new Date(at));
+  await page.goto("/" + hash);
+  await expect(page.locator("canvas.strip").first()).toHaveAttribute("data-cursor-day", /.+/);
+}
+
+const row = (page: Page, zone: string) => page.locator(`[data-testid=row][data-zone="${zone}"]`).first();
+
+async function expectReading(page: Page, zone: string, date: string, time: string) {
+  const r = row(page, zone);
+  await expect(r.getByTestId("time")).toHaveText(time);
+  await expect(r.locator("[data-testid=date] > span").first()).toHaveText(date);
+  // The strip's own label for the day under the cursor names the same day.
+  await expect(r.locator("canvas.strip")).toHaveAttribute("data-cursor-day", date);
+}
+
+test.describe("spec acceptance table", () => {
+  test("Sat 21 Nov 2026 13:13 GMT: rows disagree on date and weekday", async ({ page }) => {
+    await open(page, Date.UTC(2026, 10, 21, 13, 13), BOARD);
+    await expectReading(page, LON, "Sat 21 Nov", "13:13");
+    await expectReading(page, SYD, "Sun 22 Nov", "00:13");
+    await expectReading(page, CHI, "Sat 21 Nov", "07:13");
+  });
+
+  test("Mon 23 Nov 2026 07:00 GMT: copy line text", async ({ page, context }) => {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await open(page, Date.UTC(2026, 10, 23, 7), LONDON_HOME);
+    const line = "Mon 23 Nov, 07:00 London / 18:00 Sydney / 01:00 Chicago";
+    await expect(page.getByTestId("copy-line")).toHaveText(line);
+    await page.getByRole("button", { name: "Copy" }).click();
+    await expect(page.locator(".toast")).toHaveText("Copied");
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(line);
+  });
+
+  test("Fri 27 Nov 2026 22:00 GMT: Sydney row shows the weekend, with no working bar", async ({ page }) => {
+    await open(page, Date.UTC(2026, 10, 27, 22), BOARD);
+    await expectReading(page, LON, "Fri 27 Nov", "22:00");
+    await expectReading(page, SYD, "Sat 28 Nov", "09:00");
+    await expectReading(page, CHI, "Fri 27 Nov", "16:00");
+    await expect(row(page, SYD).getByTestId("state")).toContainText("weekend");
+    await expect(row(page, SYD).locator("canvas.strip")).toHaveAttribute("data-working", "no");
+    await expect(row(page, CHI).locator("canvas.strip")).toHaveAttribute("data-working", "yes");
+  });
+
+  test("Sat 3 Apr 2027 16:59 BST: gap +10, with the change ahead", async ({ page }) => {
+    await open(page, Date.UTC(2027, 3, 3, 15, 59), LONDON_HOME);
+    await expectReading(page, SYD, "Sun 4 Apr", "02:59");
+    await expectReading(page, CHI, "Sat 3 Apr", "10:59");
+    await expect(row(page, SYD).getByTestId("badge")).toHaveText("+10h");
+    await expect(row(page, SYD).getByTestId("gapnote")).toHaveText("Gap becomes +9h on Sat 3 Apr at 17:00 London time");
+  });
+
+  test("Sat 3 Apr 2027 17:00 BST: gap +9; Sydney repeats an hour (25-hour day)", async ({ page }) => {
+    await open(page, Date.UTC(2027, 3, 3, 16), LONDON_HOME);
+    await expectReading(page, LON, "Sat 3 Apr", "17:00");
+    await expectReading(page, SYD, "Sun 4 Apr", "02:00");
+    await expectReading(page, CHI, "Sat 3 Apr", "11:00");
+    await expect(row(page, SYD).getByTestId("badge")).toHaveText("+9h");
+    await expect(row(page, SYD).locator("canvas.strip")).toHaveAttribute("data-cursor-day-hours", "25");
+  });
+
+  test("Sat 2 Oct 2027 17:00 BST: gap +10; Sydney skips an hour (23-hour day)", async ({ page }) => {
+    await open(page, Date.UTC(2027, 9, 2, 16), LONDON_HOME);
+    await expectReading(page, LON, "Sat 2 Oct", "17:00");
+    await expectReading(page, SYD, "Sun 3 Oct", "03:00");
+    await expectReading(page, CHI, "Sat 2 Oct", "11:00");
+    await expect(row(page, SYD).getByTestId("badge")).toHaveText("+10h");
+    await expect(row(page, SYD).locator("canvas.strip")).toHaveAttribute("data-cursor-day-hours", "23");
+  });
+});
+
+test.describe("home and today", () => {
+  test("the everytimezone regression: on first render each cursor sits in its own row's day", async ({ page }) => {
+    await open(page, Date.UTC(2026, 10, 21, 13, 18), BOARD);
+    await expectReading(page, LON, "Sat 21 Nov", "13:18");
+    await expectReading(page, SYD, "Sun 22 Nov", "00:18");
+    await expectReading(page, CHI, "Sat 21 Nov", "07:18");
+  });
+
+  test("the browser's zone is the home row, and today is its date", async ({ page }, info) => {
+    const zone = info.project.name;
+    await open(page, Date.UTC(2026, 10, 21, 13, 18), BOARD);
+    const home = page.locator("[data-testid=row][data-home]");
+    await expect(home).toHaveCount(1);
+    await expect(home).toHaveAttribute("data-zone", zone);
+    await expect(page.getByTestId("row").first()).toHaveAttribute("data-zone", zone);
+    const today = { [LON]: "Today in LondonSaturday 21 November", [CHI]: "Today in ChicagoSaturday 21 November", [SYD]: "Today in SydneySunday 22 November" }[zone];
+    await expect(page.getByTestId("today")).toHaveText(today!);
+  });
+
+  test("a first visit shows the home zone plus the default cities", async ({ page }, info) => {
+    await open(page, Date.UTC(2026, 10, 21, 13, 18));
+    const names = await page.getByTestId("row").evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.name));
+    const homeName = { [LON]: "London", [CHI]: "Chicago", [SYD]: "Sydney" }[info.project.name]!;
+    expect(names[0]).toBe(homeName);
+    expect(new Set(names)).toEqual(new Set([homeName, "London", "New York", "Sydney"]));
+    await expect(page).toHaveURL(/#cities=/);
+  });
+});
+
+test.describe("overlap", () => {
+  test("London, Chicago and Sydney in November fall back to shared waking hours", async ({ page }) => {
+    await open(page, Date.UTC(2026, 10, 23, 7), LONDON_HOME);
+    await expect(page.getByTestId("overlap")).toHaveText(
+      "No shared working hours on Mon 23 Nov. Shared waking hours, 07:00 to 22:00: 20:00–22:00 London / 07:00–09:00 Sydney (Tue 24 Nov) / 14:00–16:00 Chicago",
+    );
+  });
+
+  test("shared working hours are named when there are some", async ({ page }) => {
+    await open(page, Date.UTC(2026, 10, 23, 7), "#cities=london-gb,paris-fr&home=london-gb");
+    await expect(page.getByTestId("overlap")).toHaveText("Shared working hours on Mon 23 Nov: 09:00–16:30 London / 10:00–17:30 Paris");
+  });
+});
+
+test.describe("moving time", () => {
+  test("arrow keys move 15 minutes, Shift an hour, and Live returns to now", async ({ page }) => {
+    await open(page, Date.UTC(2026, 10, 21, 13, 18), LONDON_HOME);
+    await page.getByRole("region", { name: /Time zone board/ }).focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(row(page, LON).getByTestId("time")).toHaveText("13:30");
+    await page.keyboard.press("Shift+ArrowRight");
+    await expect(row(page, LON).getByTestId("time")).toHaveText("14:30");
+    await page.keyboard.press("Shift+ArrowLeft");
+    await page.keyboard.press("Shift+ArrowLeft");
+    await expect(row(page, LON).getByTestId("time")).toHaveText("12:30");
+    await page.getByTestId("live").click();
+    await expect(row(page, LON).getByTestId("time")).toHaveText("13:18");
+  });
+
+  test("dragging a strip moves every row together", async ({ page }) => {
+    await open(page, Date.UTC(2026, 10, 21, 13, 18), LONDON_HOME);
+    const strip = row(page, LON).locator("canvas.strip");
+    const box = (await strip.boundingBox())!;
+    const pph = box.width / 36; // desktop width shows 36 hours
+    await page.mouse.move(box.x + box.width / 2, box.y + 30);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2 - 3 * pph, box.y + 30, { steps: 8 });
+    await page.mouse.up();
+    await expectReading(page, LON, "Sat 21 Nov", "16:15");
+    await expectReading(page, SYD, "Sun 22 Nov", "03:15");
+  });
+});
+
+test.describe("editing and persistence", () => {
+  test("add, label, reorder and remove cities; the link and the browser both keep the board", async ({ page }) => {
+    await open(page, Date.UTC(2026, 10, 21, 13, 18), LONDON_HOME);
+    await page.getByRole("button", { name: "Edit board" }).click();
+
+    const search = page.getByRole("combobox", { name: "Add a city" });
+    await search.fill("AEDT");
+    await expect(page.getByText(/Zone abbreviations such as AEDT are ambiguous/)).toBeVisible();
+    await search.fill("tok");
+    await expect(page.getByRole("option").first()).toContainText("Tokyo, Japan");
+    await search.press("Enter");
+    await expect(row(page, "Asia/Tokyo")).toBeVisible();
+    // Added by offset: Tokyo (+9) goes before Sydney (+11).
+    await expect(page).toHaveURL(/#cities=london-gb,tokyo-jp,sydney-au,chicago-us&home=london-gb$/);
+
+    await page.getByLabel("Label for Sydney").fill("Office");
+    await expect(row(page, SYD).locator(".personal")).toHaveText("Office");
+    await expect(page).not.toHaveURL(/Office/);
+
+    await page.getByRole("button", { name: "Move Chicago up" }).click();
+    await page.getByRole("button", { name: "Move Chicago up" }).click();
+    await page.getByRole("button", { name: "Remove Tokyo" }).click();
+    await expect(page).toHaveURL(/#cities=london-gb,chicago-us,sydney-au&home=london-gb$/);
+
+    await page.getByLabel("Chicago working hours start").fill("08:00");
+    await expect(page).toHaveURL(/chicago-us@0800-1730/);
+
+    await page.getByLabel("Put personal labels in the link").check();
+    await expect(page).toHaveURL(/sydney-au~Office/);
+
+    // A bare address brings back this browser's board.
+    await page.goto("/");
+    await expect(page.getByTestId("row")).toHaveCount(3);
+    await expect(page).toHaveURL(/#cities=london-gb,chicago-us@0800-1730,sydney-au~Office&home=london-gb$/);
+    await expect(row(page, SYD).locator(".personal")).toHaveText("Office");
+  });
+
+  test("the board works at 375px with no sideways scroll", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await open(page, Date.UTC(2026, 10, 21, 13, 18), BOARD);
+    await page.getByRole("button", { name: "Edit board" }).click();
+    const [scroll, client] = await page.evaluate(() => [document.documentElement.scrollWidth, document.documentElement.clientWidth]);
+    expect(scroll).toBe(client);
+    await expectReading(page, SYD, "Sun 22 Nov", "00:18");
+  });
+});
+
+test.describe("static page", () => {
+  test("ships no time: nothing time-dependent is in the HTML", async ({ browser }) => {
+    const context = await browser.newContext({ javaScriptEnabled: false });
+    const page = await context.newPage();
+    await page.goto("/");
+    const text = await page.locator("body").innerText();
+    expect(text).not.toMatch(/\b(Mon|Tue|Wed|Thu|Fri|Sat|Sun) \d{1,2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/);
+    expect(text).not.toMatch(/Today in/);
+    await expect(page.getByTestId("row")).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Made with AI: colophon" })).toHaveAttribute("href", "https://glorious.works/colophon/");
+    await context.close();
+  });
+});

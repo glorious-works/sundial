@@ -32,7 +32,9 @@ npm ci
 npm run lint
 npm test
 npm run build
+npm run test:e2e   # Playwright against the build, in London, Chicago and Sydney
 ```
+First run on a machine: `npx playwright install chromium`.
 
 ## Session sync (local and cloud)
 Work on this repo happens both on Stephan's laptop and in Claude Code cloud sessions, and each side only sees what is pushed to GitHub. Cloud sessions start from the default branch, so unmerged PR branches and unpushed local commits are invisible to them.
