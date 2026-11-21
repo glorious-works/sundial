@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { copyLine, findOverlap, gapNote, intervalText, type BoardRow } from "./board";
+import { bestText, copyLine, findOverlap, gapNote, intervalText, type BoardRow } from "./board";
 import { DEFAULT_HOURS, isWorking, workStatus } from "./hours";
 import { DAY, localToInstant, nextGapChange, wallOf } from "./time";
 
@@ -11,6 +11,11 @@ const paris: BoardRow = { name: "Paris", zone: "Europe/Paris", hours: DEFAULT_HO
 describe("copy line", () => {
   it("spec row 2: Mon 23 Nov 2026 07:00 GMT", () => {
     expect(copyLine([london, sydney, chicago], Date.UTC(2026, 10, 23, 7))).toBe("Mon 23 Nov, 07:00 London / 18:00 Sydney / 01:00 Chicago");
+  });
+
+  it("adds the year when asked", () => {
+    expect(copyLine([london, sydney], Date.UTC(2027, 2, 10, 12), true)).toBe("Wed 10 Mar 2027, 12:00 London / 23:00 Sydney");
+    expect(copyLine([london, sydney], Date.UTC(2027, 2, 10, 14), true)).toBe("Wed 10 Mar 2027, 14:00 London / 01:00 Sydney (Thu 11 Mar 2027)");
   });
 
   it("brackets the date of rows whose date differs from home's", () => {
@@ -61,6 +66,31 @@ describe("overlap", () => {
     const o = findOverlap([london, paris], from, to);
     expect(o.kind).toBe("work");
     expect(o.intervals).toEqual([{ start: Date.UTC(2026, 10, 23, 9), end: Date.UTC(2026, 10, 23, 16, 30) }]);
+  });
+
+  it("with no shared waking hours, suggests the time that leaves everyone least far outside them", () => {
+    const [from, to] = londonDay(2026, 11, 21);
+    const row = (name: string, zone: string): BoardRow => ({ name, zone, hours: DEFAULT_HOURS });
+    const rows = [london, row("New York", "America/New_York"), row("Delhi", "Asia/Kolkata"), row("Tokyo", "Asia/Tokyo"), sydney];
+    const o = findOverlap(rows, from, to);
+    expect(o.kind).toBe("best");
+    // 10:45 to 12:15 London all leave 75 minutes outside in total; 11:30 is the middle.
+    expect(o.intervals).toEqual([{ start: Date.UTC(2026, 10, 21, 10, 45), end: Date.UTC(2026, 10, 21, 12, 15) }]);
+    expect(bestText(o, rows)).toBe("Best: 11:30 London, with New York up early (06:30) and Sydney up late (22:30).");
+  });
+
+  it("calls a row more than two hours outside waking hours asleep", () => {
+    // With waking hours of 09:00 to 12:00, London and Sydney cannot both be awake: every quarter
+    // hour from 00:45 to 09:15 London leaves them 495 minutes outside in total; 05:00 is the middle.
+    const [from, to] = londonDay(2026, 11, 23);
+    const o = findOverlap([london, sydney], from, to, { start: 9 * 60, end: 12 * 60 });
+    expect(o.intervals).toEqual([{ start: Date.UTC(2026, 10, 23, 0, 45), end: Date.UTC(2026, 10, 23, 9, 15) }]);
+    expect(bestText(o, [london, sydney])).toBe("Best: 05:00 London, with London asleep (05:00) and Sydney asleep (16:00).");
+  });
+
+  it("compares nothing for a single row", () => {
+    const [from, to] = londonDay(2026, 11, 21);
+    expect(findOverlap([london], from, to).kind).toBe("none");
   });
 
   it("has no working overlap at the weekend", () => {

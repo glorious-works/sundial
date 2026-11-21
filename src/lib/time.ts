@@ -175,8 +175,8 @@ export function dayBounds(zone: string, ms: number): { start: number; end: numbe
 
 export const pad = (n: number) => String(n).padStart(2, "0");
 export const hhmm = (w: Wall) => `${pad(w.hour)}:${pad(w.minute)}`;
-/** "Sun 22 Nov" */
-export const dayLabel = (w: Wall) => `${WD[w.weekday]} ${w.day} ${MO[w.month - 1]}`;
+/** "Sun 22 Nov", or "Sun 22 Nov 2027" with the year. */
+export const dayLabel = (w: Wall, withYear = false) => `${WD[w.weekday]} ${w.day} ${MO[w.month - 1]}${withYear ? ` ${w.year}` : ""}`;
 /** "Sunday 22 November" */
 export const longDayLabel = (w: Wall) => `${WDL[w.weekday]} ${w.day} ${MOL[w.month - 1]}`;
 
@@ -187,6 +187,18 @@ export function fmtGap(min: number): string {
   const h = Math.floor(a / 60);
   const m = a % 60;
   return (min > 0 ? "+" : "−") + h + (m ? ":" + pad(m) : "h");
+}
+
+/** How far the cursor is from now: "+15 min", "−3h 15m", "+2 days 4h". Minus is U+2212. */
+export function fmtDistance(ms: number): string {
+  const sign = ms < 0 ? "−" : "+";
+  const total = Math.round(Math.abs(ms) / MIN);
+  const days = Math.floor(total / 1440);
+  const h = Math.floor((total % 1440) / 60);
+  const m = total % 60;
+  if (days) return `${sign}${days} ${days === 1 ? "day" : "days"}${h ? ` ${h}h` : ""}`;
+  if (h) return `${sign}${h}h${m ? ` ${m}m` : ""}`;
+  return `${sign}${m} min`;
 }
 
 /** "+1 day", "−2 days", or "" when the same date. */

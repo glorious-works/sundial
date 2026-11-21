@@ -5,6 +5,7 @@ import {
   dayLabel,
   DAY,
   fmtDayDiff,
+  fmtDistance,
   fmtGap,
   hhmm,
   HOUR,
@@ -162,6 +163,14 @@ describe("time helpers", () => {
     expect(fmtGap(330)).toBe("+5:30");
     expect(fmtGap(345)).toBe("+5:45");
     expect(fmtGap(0)).toBe("±0h");
+  });
+
+  it("says how far the cursor is from now", () => {
+    expect(fmtDistance(15 * MIN)).toBe("+15 min");
+    expect(fmtDistance(-(3 * HOUR + 15 * MIN))).toBe("−3h 15m");
+    expect(fmtDistance(2 * HOUR)).toBe("+2h");
+    expect(fmtDistance(DAY + 4 * HOUR)).toBe("+1 day 4h");
+    expect(fmtDistance(108 * DAY)).toBe("+108 days");
   });
 
   it("localToInstant round-trips wall times, and lands after a skipped hour", () => {
