@@ -1,0 +1,40 @@
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# local Claude Code state
+.claude/
+
+# env files: secrets live here, never committed
+.env
+.env.*
+!.env.example
+
+*.pem
+
+# node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+coverage/
+test-results/
+playwright-report/
+
+# next.js
+.next/
+out/
+build/
+next-env.d.ts
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+.env*.local
+
+# vercel
+.vercel
+
+# personal prototype with a real roster: never commit
+docs/prototype.html
