@@ -1,16 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { copyLine, findOverlap, gapNote, intervalText, type Overlap } from "@/lib/board";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { bestText, copyLine, findOverlap, gapNote, intervalText, type Overlap } from "@/lib/board";
 import { hhmmColon, isWorking, parseHHMM, workStatus, DEFAULT_HOURS } from "@/lib/hours";
 import { addCity, encodeHash, loadSettings, moveCity, removeCity, resolveRows, setHours, setLabel, writeStored, type Row, type Settings } from "@/lib/roster";
 import { stripLayout, visibleHours, type StripLayout } from "@/lib/strip";
 import { rgbCss, skyRGB, skyState, sun } from "@/lib/sun";
-import { dayBounds, dayDiff, dayLabel, fmtDayDiff, fmtGap, hhmm, HOUR, longDayLabel, MIN, nextGapChange, offsetMin, Q, wallOf } from "@/lib/time";
+import { dayBounds, dayDiff, dayLabel, fmtDayDiff, fmtDistance, fmtGap, hhmm, HOUR, longDayLabel, MIN, nextGapChange, offsetMin, Q, wallOf } from "@/lib/time";
 import { CitySearch } from "./CitySearch";
 import { drawStrip, readPalette } from "./drawStrip";
 
 const snap = (t: number) => Math.round(t / Q) * Q;
+/** Coming back to a tab hidden this long returns the board to now. */
+const AWAY = 30 * MIN;
 
 function browserZone(): string {
   try {
@@ -58,7 +60,14 @@ function useRepaintSignal(): number {
   return n;
 }
 
-export function Board({ onHome }: { onHome: (text: { label: string; date: string }) => void }) {
+export interface HomeInfo {
+  label: string;
+  date: string;
+  /** The board has cities beside home, so the brand band can shrink to a bar. */
+  compact: boolean;
+}
+
+export function Board({ onHome }: { onHome: (info: HomeInfo) => void }) {
   const [zone] = useState(browserZone);
   const [settings, setSettings] = useState<Settings>(() => loadSettings(location.hash, Date.now()));
   const now = useNow();
@@ -68,16 +77,21 @@ export function Board({ onHome }: { onHome: (text: { label: string; date: string
   const [editing, setEditing] = useState(false);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [toast, setToast] = useState<string | null>(null);
+  const [announce, setAnnounce] = useState("");
 
   const live = manual === null;
   const cursor = manual ?? now;
   const rows = useMemo(() => resolveRows(settings, zone), [settings, zone]);
   const home = rows[0];
+  const others = rows.slice(1);
+  // A date in another year than the row's own today carries its year everywhere it is shown.
+  const otherYear = (t: number) => rows.some((r) => wallOf(r.zone, t).year !== wallOf(r.zone, now).year);
 
   const boardRef = useRef<HTMLElement>(null);
-  const lineRef = useRef<HTMLOutputElement>(null);
+  const lineRef = useRef<HTMLParagraphElement>(null);
   const canvases = useRef(new Map<string, HTMLCanvasElement>());
   const drag = useRef<{ id: number; x: number; moved: number; cv: HTMLCanvasElement } | null>(null);
+  const scrollTo = useRef<string | null>(null);
 
   // ---------- Persistence: the link and this browser ----------
   useEffect(() => {
@@ -89,6 +103,17 @@ export function Board({ onHome }: { onHome: (text: { label: string; date: string
     const onHash = () => setSettings(loadSettings(location.hash, Date.now()));
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+
+  // A planned time left in a tab is not now: after a long absence the board returns to the clock.
+  useEffect(() => {
+    let hiddenAt = 0;
+    const onVis = () => {
+      if (document.visibilityState === "hidden") hiddenAt = Date.now();
+      else if (hiddenAt && Date.now() - hiddenAt >= AWAY) setManual(null);
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
   }, []);
 
   // ---------- Size ----------
@@ -105,22 +130,24 @@ export function Board({ onHome }: { onHome: (text: { label: string; date: string
 
   // ---------- What every row shows ----------
   const layouts: (StripLayout | null)[] = useMemo(() => rows.map((r) => (width > 0 ? stripLayout(r.zone, cursor, width) : null)), [rows, cursor, width]);
-  const visibleOverlap: Overlap = useMemo(() => {
-    const L = layouts[0];
-    if (!L || rows.length < 2) return { kind: "none", intervals: [] };
-    return findOverlap(rows, L.t0, L.t1);
-  }, [layouts, rows]);
   const dayOverlap = useMemo(() => {
     if (rows.length < 2) return null;
     const { start, end } = dayBounds(home.zone, cursor);
     return { day: dayLabel(wallOf(home.zone, cursor)), ...findOverlap(rows, start, end) };
   }, [rows, home, cursor]);
-  const line = useMemo(() => copyLine(rows, cursor), [rows, cursor]);
+  const visibleOverlap: Overlap = useMemo(() => {
+    const L = layouts[0];
+    if (!L || rows.length < 2) return { kind: "none", intervals: [] };
+    const o = findOverlap(rows, L.t0, L.t1);
+    // When nothing is shared, wash the best time the overlap line names rather than another one.
+    return o.kind === "best" && dayOverlap?.kind === "best" ? dayOverlap : o;
+  }, [layouts, rows, dayOverlap]);
+  const withYear = otherYear(cursor);
+  const line = copyLine(rows, cursor, withYear);
 
   useEffect(() => {
-    const w = wallOf(home.zone, now);
-    onHome({ label: `Today in ${home.name}`, date: longDayLabel(w) });
-  }, [home, now, onHome]);
+    onHome({ label: `Today in ${home.name}`, date: longDayLabel(wallOf(home.zone, now)), compact: rows.length > 1 });
+  }, [home, now, rows.length, onHome]);
 
   // Gap changes within four weeks of the cursor, worked out once the cursor settles.
   useEffect(() => {
@@ -146,9 +173,24 @@ export function Board({ onHome }: { onHome: (text: { label: string; date: string
     });
   }, [rows, layouts, visibleOverlap, width, repaint]);
 
+  // A city just added is scrolled into view.
+  useLayoutEffect(() => {
+    const key = scrollTo.current;
+    if (!key) return;
+    scrollTo.current = null;
+    document.querySelector(`[data-key="${key}"]`)?.scrollIntoView({ block: "nearest" });
+  }, [rows]);
+
   // ---------- Moving time ----------
-  const moveTo = useCallback((t: number) => setManual(t), []);
-  const goLive = useCallback(() => setManual(null), []);
+  // Screen readers hear the new time after a deliberate move, never on the clock's own ticks.
+  const moveTo = (t: number) => {
+    setManual(t);
+    setAnnounce(copyLine(rows, t, otherYear(t)));
+  };
+  const goLive = () => {
+    setManual(null);
+    setAnnounce(`Back to now. ${copyLine(rows, Date.now())}`);
+  };
   const pph = width ? width / visibleHours(width) : 1;
 
   useEffect(() => {
@@ -205,7 +247,7 @@ export function Board({ onHome }: { onHome: (text: { label: string; date: string
   // ---------- Copy ----------
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(null), 2200);
+    const t = setTimeout(() => setToast(null), 2600);
     return () => clearTimeout(t);
   }, [toast]);
   const copy = () => {
@@ -217,7 +259,7 @@ export function Board({ onHome }: { onHome: (text: { label: string; date: string
       const sel = getSelection();
       sel?.removeAllRanges();
       sel?.addRange(range);
-      setToast("Selected. Copy it with your keyboard.");
+      setToast("This browser blocked copying, so the line is selected: copy it from there.");
     };
     try {
       navigator.clipboard.writeText(line).then(() => setToast("Copied"), select);
@@ -228,69 +270,45 @@ export function Board({ onHome }: { onHome: (text: { label: string; date: string
 
   const update = (f: (s: Settings) => Settings) => setSettings((s) => f(s));
   const homeEntryId = home.entry?.id ?? null;
-  const others = rows.slice(1);
 
   return (
     <>
       <div className="controls">
-        <button className={`btn${live ? " solid" : ""}`} type="button" onClick={goLive} data-testid="live">
-          {live && <span className="dot" />}
-          <span>{live ? "Live" : "Back to now"}</span>
-        </button>
+        {live ? (
+          <button className="btn live" type="button" onClick={goLive} data-testid="live" aria-label="Live: showing now">
+            <span className="dot" aria-hidden="true" />
+            Live
+          </button>
+        ) : (
+          <button className="btn now" type="button" onClick={goLive} data-testid="live">
+            Back to now
+            <span className="far" data-testid="distance">
+              {fmtDistance(cursor - now)}
+            </span>
+          </button>
+        )}
         <button className="btn" type="button" aria-label="Back one hour" onClick={() => moveTo(snap(cursor) - HOUR)}>
           &minus;1h
         </button>
         <button className="btn" type="button" aria-label="Forward one hour" onClick={() => moveTo(snap(cursor) + HOUR)}>
           +1h
         </button>
-        <span className="spacer" />
-        <button className={`btn${editing ? " solid" : ""}`} type="button" aria-pressed={editing} onClick={() => setEditing((x) => !x)}>
-          {editing ? "Done" : "Edit board"}
-        </button>
       </div>
 
-      <div className="summary">
-        <output ref={lineRef} data-testid="copy-line">
-          {line}
-        </output>
-        <button className="btn" type="button" onClick={copy}>
-          Copy
-        </button>
-      </div>
-      <p className="overlap" data-testid="overlap">
-        {dayOverlap ? <OverlapText o={dayOverlap} rows={rows} /> : "Add a city to see the hours you share."}
-      </p>
-
-      {(editing || others.length === 0) && (
-        <div className="editbar">
-          <CitySearch
-            homeZone={home.zone}
-            at={cursor}
-            isOnBoard={(id) => settings.entries.some((e) => e.id === id)}
-            onAdd={(c) => update((s) => addCity(s, c.id, cursor))}
-          />
-          {others.length === 0 && !editing && <span className="hint">Add the cities you keep track of. Your board stays in this browser and its link.</span>}
-          {editing && (
-            <label className="hint inline-flex items-center gap-2">
-              <input type="checkbox" checked={settings.labelsInLink} onChange={(e) => update((s) => ({ ...s, labelsInLink: e.target.checked }))} />
-              Put personal labels in the link
-            </label>
-          )}
-          {editing && settings.home && (
-            <button className="btn small" type="button" onClick={() => update((s) => ({ ...s, home: undefined }))}>
-              Make this device&rsquo;s zone home
-            </button>
-          )}
-        </div>
-      )}
-
-      <section className="board" ref={boardRef} tabIndex={0} onKeyDown={onKeyDown} aria-label="Time zone board. Drag a strip or use the arrow keys to move the time.">
+      <section
+        className={`board${live ? "" : " not-live"}`}
+        ref={boardRef}
+        tabIndex={0}
+        onKeyDown={onKeyDown}
+        aria-label="Time zone board. Drag a strip or use the arrow keys to move the time; Shift moves an hour, Home returns to now."
+      >
         {rows.map((r, i) => (
           <RowView
             key={r.key}
             row={r}
             home={home}
             cursor={cursor}
+            now={now}
             layout={layouts[i]}
             note={notes[r.key]}
             canvasRef={(el) => {
@@ -308,7 +326,10 @@ export function Board({ onHome }: { onHome: (text: { label: string; date: string
                   onHours={(h) => update((s) => setHours(s, r.key, h))}
                   onMove={(dir) => update((s) => moveCity(s, r.key, dir, homeEntryId))}
                   onHome={() => update((s) => ({ ...s, home: r.key }))}
-                  onRemove={() => update((s) => removeCity(s, r.key))}
+                  onRemove={() => {
+                    update((s) => removeCity(s, r.key));
+                    setAnnounce(`${r.name} removed`);
+                  }}
                 />
               ) : editing && !r.entry ? (
                 <div className="edit">
@@ -320,6 +341,57 @@ export function Board({ onHome }: { onHome: (text: { label: string; date: string
         ))}
       </section>
 
+      <div className="addrow">
+        <CitySearch
+          homeZone={home.zone}
+          at={cursor}
+          isOnBoard={(id) => settings.entries.some((e) => e.id === id)}
+          onAdd={(c) => {
+            scrollTo.current = c.id;
+            update((s) => addCity(s, c.id, cursor));
+            setAnnounce(`${c.name} added`);
+          }}
+        />
+        {others.length === 0 && <p className="hint">Add the cities you keep track of. Your board stays in this browser and in its link.</p>}
+        {settings.entries.length > 0 && (
+          <button className={`btn${editing ? " solid" : ""}`} type="button" onClick={() => setEditing((x) => !x)}>
+            {editing ? "Done" : "Edit board"}
+          </button>
+        )}
+        {editing && (
+          <div className="editbar">
+            <label className="check">
+              <input type="checkbox" checked={settings.labelsInLink} onChange={(e) => update((s) => ({ ...s, labelsInLink: e.target.checked }))} />
+              Put personal labels in the link
+            </label>
+            {settings.home && (
+              <button className="btn small" type="button" onClick={() => update((s) => ({ ...s, home: undefined }))}>
+                Make this device&rsquo;s zone home
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {others.length > 0 && (
+        <>
+          <div className="summary">
+            <p ref={lineRef} className="line" data-testid="copy-line">
+              {line}
+            </p>
+            <button className="btn" type="button" onClick={copy}>
+              Copy
+            </button>
+          </div>
+          <p className="overlap" data-testid="overlap">
+            {dayOverlap && <OverlapText o={dayOverlap} rows={rows} />}
+          </p>
+        </>
+      )}
+
+      <div className="sr-only" role="status" aria-live="polite" data-testid="announce">
+        {announce}
+      </div>
       {toast && (
         <div className="toast" role="status">
           {toast}
@@ -349,17 +421,20 @@ function OverlapText({ o, rows }: { o: Overlap & { day: string }; rows: Row[] })
         <strong>No shared working hours</strong> on {o.day}. Shared waking hours, 07:00 to 22:00: {describe()}
       </>
     );
-  return (
-    <>
-      <strong>No shared working or waking hours</strong> on {o.day}.
-    </>
-  );
+  if (o.kind === "best")
+    return (
+      <>
+        <strong>No hour suits everyone</strong> on {o.day}. {bestText(o, rows)}
+      </>
+    );
+  return null;
 }
 
 interface RowViewProps {
   row: Row;
   home: Row;
   cursor: number;
+  now: number;
   layout: StripLayout | null;
   note?: string;
   canvasRef: (el: HTMLCanvasElement | null) => void;
@@ -367,18 +442,19 @@ interface RowViewProps {
   edit: React.ReactNode;
 }
 
-function RowView({ row: r, home, cursor, layout, note, canvasRef, pointer, edit }: RowViewProps) {
+function RowView({ row: r, home, cursor, now, layout, note, canvasRef, pointer, edit }: RowViewProps) {
   const w = wallOf(r.zone, cursor);
   const hw = wallOf(home.zone, cursor);
   const diff = dayDiff(hw, w);
   const gap = offsetMin(r.zone, cursor) - offsetMin(home.zone, cursor);
   const s = r.lat != null && r.lon != null ? sun(cursor, r.lat, r.lon) : null;
   const working = isWorking(w, r.hours);
+  const year = w.year !== wallOf(r.zone, now).year;
   return (
-    <div className={`row${r.home ? " is-home" : ""}`} data-testid="row" data-zone={r.zone} data-name={r.name} data-home={r.home || undefined}>
+    <div className={`row${r.home ? " is-home" : ""}`} data-testid="row" data-key={r.key} data-zone={r.zone} data-name={r.name} data-home={r.home || undefined}>
       <div className="label">
         <div className="city">
-          <span className="name">{r.name}</span>
+          <h2 className="name">{r.name}</h2>
           {r.label && <span className="personal">{r.label}</span>}
           <span className="badge" data-testid="badge">
             {r.home ? "Home" : fmtGap(gap)}
@@ -389,7 +465,7 @@ function RowView({ row: r, home, cursor, layout, note, canvasRef, pointer, edit 
         </div>
         <div className="meta">
           <div className="date" data-testid="date">
-            <span>{dayLabel(w)}</span>
+            <span>{dayLabel(w, year)}</span>
             {!r.home && diff !== 0 && <span className="rel">{fmtDayDiff(diff)}</span>}
           </div>
           <div className="state" data-testid="state">
@@ -450,9 +526,9 @@ function RowEditor({ row: r, first, last, onLabel, onHours, onMove, onHome, onRe
         to
         <input className="field" type="time" step={900} value={hhmmColon(hours.end)} disabled={!r.hours} aria-label={`${r.name} working hours end`} onChange={(e) => setTime("end", e.target.value)} />
       </label>
-      <label>
+      <label className="check">
         <input type="checkbox" checked={!r.hours} onChange={(e) => onHours(e.target.checked ? null : undefined)} />
-        None
+        No working hours
       </label>
       <span className="spacer" />
       {!r.home && (

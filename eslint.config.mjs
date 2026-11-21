@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Local tooling, git-ignored: the impeccable install and its reports.
+    ".claude/**",
+    ".impeccable/**",
   ]),
 ]);
 

@@ -121,9 +121,58 @@ test.describe("overlap", () => {
     );
   });
 
+  test("a roster with no shared waking hours gets the best time and who is outside", async ({ page }) => {
+    await open(page, Date.UTC(2026, 10, 21, 9), "#cities=new-york-us,london-gb,delhi-in,tokyo-jp,sydney-au&home=london-gb");
+    await expect(page.getByTestId("overlap")).toHaveText(
+      "No hour suits everyone on Sat 21 Nov. Best: 11:30 London, with New York up early (06:30) and Sydney up late (22:30).",
+    );
+  });
+
   test("shared working hours are named when there are some", async ({ page }) => {
     await open(page, Date.UTC(2026, 10, 23, 7), "#cities=london-gb,paris-fr&home=london-gb");
     await expect(page.getByTestId("overlap")).toHaveText("Shared working hours on Mon 23 Nov: 09:00–16:30 London / 10:00–17:30 Paris");
+  });
+});
+
+test.describe("not now", () => {
+  test("a moved cursor is marked: Back to now names the distance, and screen readers hear the new time", async ({ page }) => {
+    await open(page, Date.UTC(2026, 10, 21, 13, 18), LONDON_HOME);
+    await expect(page.getByTestId("live")).toHaveAccessibleName("Live: showing now");
+    await page.getByRole("region", { name: /Time zone board/ }).focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(page.getByTestId("live")).toContainText("Back to now");
+    await expect(page.getByTestId("distance")).toHaveText("+12 min");
+    await expect(page.locator("section.board")).toHaveClass(/not-live/);
+    await expect(page.getByTestId("announce")).toHaveText("Sat 21 Nov, 13:30 London / 00:30 Sydney (Sun 22 Nov) / 07:30 Chicago");
+  });
+
+  test("dates in another year carry the year", async ({ page }) => {
+    await open(page, Date.UTC(2026, 11, 31, 23, 30), LONDON_HOME);
+    await expect(row(page, LON).locator("[data-testid=date] > span").first()).toHaveText("Thu 31 Dec");
+    await page.getByRole("button", { name: "Forward one hour" }).click();
+    await expect(row(page, LON).locator("[data-testid=date] > span").first()).toHaveText("Fri 1 Jan 2027");
+    await expect(page.getByTestId("copy-line")).toHaveText("Fri 1 Jan 2027, 00:30 London / 11:30 Sydney / 18:30 Chicago (Thu 31 Dec 2026)");
+  });
+
+  test("coming back after 30 minutes away returns the board to now", async ({ page }) => {
+    const at = Date.UTC(2026, 10, 21, 13, 18);
+    await open(page, at, LONDON_HOME);
+    await page.getByRole("button", { name: "Forward one hour" }).click();
+    await expect(row(page, LON).getByTestId("time")).toHaveText("14:15");
+    const setVisibility = (state: string) =>
+      page.evaluate((s) => {
+        Object.defineProperty(document, "visibilityState", { configurable: true, get: () => s });
+        document.dispatchEvent(new Event("visibilitychange"));
+      }, state);
+    await setVisibility("hidden");
+    await page.clock.setFixedTime(new Date(at + 10 * 60e3));
+    await setVisibility("visible");
+    await expect(row(page, LON).getByTestId("time")).toHaveText("14:15"); // ten minutes is not away
+    await setVisibility("hidden");
+    await page.clock.setFixedTime(new Date(at + 45 * 60e3));
+    await setVisibility("visible");
+    await expect(row(page, LON).getByTestId("time")).toHaveText("14:03");
+    await expect(page.getByTestId("live")).toHaveAccessibleName("Live: showing now");
   });
 });
 

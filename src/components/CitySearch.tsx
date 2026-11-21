@@ -14,20 +14,28 @@ interface Props {
 /** "Add a city": a combobox over the curated list. Abbreviations are shown in results but never matched. */
 export function CitySearch({ onAdd, isOnBoard, homeZone, at }: Props) {
   const [query, setQuery] = useState("");
-  const [active, setActive] = useState(0);
+  // -1 means "the first city not already on the board".
+  const [chosen, setChosen] = useState(-1);
   const listId = useId();
   const results = searchCities(query);
   const open = query.trim().length > 0;
+  const enabled = results.map((c) => !isOnBoard(c.id));
+  const active = chosen >= 0 ? chosen : enabled.indexOf(true);
+  const step = (dir: 1 | -1) => {
+    for (let i = active + dir; i >= 0 && i < results.length; i += dir) {
+      if (enabled[i]) return setChosen(i);
+    }
+  };
   const pick = (c: City | undefined) => {
     if (!c || isOnBoard(c.id)) return;
     onAdd(c);
     setQuery("");
-    setActive(0);
+    setChosen(-1);
   };
 
   let hint = "";
   if (open && isAbbreviation(query)) hint = `Zone abbreviations such as ${query.trim()} are ambiguous, so search by city or country instead.`;
-  else if (open && !results.length) hint = "No city by that name in the list yet.";
+  else if (open && !results.length) hint = "No city by that name in the list yet. Try the nearest big city in the same time zone.";
 
   return (
     <div className="search">
@@ -38,7 +46,7 @@ export function CitySearch({ onAdd, isOnBoard, homeZone, at }: Props) {
         aria-label="Add a city"
         aria-expanded={open && results.length > 0}
         aria-controls={listId}
-        aria-activedescendant={open && results.length ? `${listId}-${active}` : undefined}
+        aria-activedescendant={open && active >= 0 ? `${listId}-${active}` : undefined}
         aria-autocomplete="list"
         placeholder="Add a city, such as Tokyo"
         autoComplete="off"
@@ -46,15 +54,15 @@ export function CitySearch({ onAdd, isOnBoard, homeZone, at }: Props) {
         value={query}
         onChange={(e) => {
           setQuery(e.target.value);
-          setActive(0);
+          setChosen(-1);
         }}
         onKeyDown={(e) => {
           if (e.key === "ArrowDown") {
             e.preventDefault();
-            setActive((a) => Math.min(a + 1, results.length - 1));
+            step(1);
           } else if (e.key === "ArrowUp") {
             e.preventDefault();
-            setActive((a) => Math.max(a - 1, 0));
+            step(-1);
           } else if (e.key === "Enter") {
             e.preventDefault();
             pick(results[active]);
@@ -75,7 +83,7 @@ export function CitySearch({ onAdd, isOnBoard, homeZone, at }: Props) {
                 role="option"
                 aria-selected={i === active}
                 aria-disabled={on}
-                onMouseEnter={() => setActive(i)}
+                onMouseEnter={() => on || setChosen(i)}
                 onMouseDown={(e) => {
                   e.preventDefault();
                   pick(c);

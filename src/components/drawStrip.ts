@@ -4,9 +4,10 @@ import type { StripLayout } from "@/lib/strip";
 import { skyRGB, sun } from "@/lib/sun";
 import { HOUR, pad } from "@/lib/time";
 
-export const STRIP_HEIGHT = 78;
-const SY = 20; // sky top
-const SH = 34; // sky height
+/** Strip geometry by canvas height: 78px from 641px wide, 64px on phones (see globals.css). */
+function geometry(H: number) {
+  return H < 70 ? { SY: 18, SH: 26, gap: 3, tick: 10 } : { SY: 20, SH: 34, gap: 4, tick: 11 };
+}
 
 export interface Palette {
   ink: string;
@@ -16,12 +17,14 @@ export interface Palette {
   na: string;
   nb: string;
   cond: string;
+  /** A hairline round the sky, so night strips keep their edge on a dark ground; transparent in light. */
+  edge: string;
 }
 
 export function readPalette(): Palette {
   const s = getComputedStyle(document.documentElement);
   const v = (n: string) => s.getPropertyValue(n).trim();
-  return { ink: v("--ink"), muted: v("--muted"), ground: v("--ground"), accent: v("--accent"), na: v("--neutral-a"), nb: v("--neutral-b"), cond: v("--cond") };
+  return { ink: v("--ink"), muted: v("--muted"), ground: v("--ground"), accent: v("--accent"), na: v("--neutral-a"), nb: v("--neutral-b"), cond: v("--cond"), edge: v("--strip-edge") };
 }
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
@@ -43,7 +46,8 @@ export interface StripRow {
 /** Draws one row's strip: sky, midnights and day labels, working bar, hour ticks, overlap, cursor. */
 export function drawStrip(cv: HTMLCanvasElement, L: StripLayout, row: StripRow, c: Palette, overlap: Overlap) {
   const W = L.width;
-  const H = STRIP_HEIGHT;
+  const H = Math.round(cv.clientHeight) || 78;
+  const { SY, SH, gap, tick } = geometry(H);
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   if (cv.width !== Math.round(W * dpr) || cv.height !== H * dpr) {
     cv.width = Math.round(W * dpr);
@@ -59,7 +63,7 @@ export function drawStrip(cv: HTMLCanvasElement, L: StripLayout, row: StripRow, 
   const spans = overlap.intervals.filter((iv) => iv.end > L.t0 && iv.start < L.t1).map((iv) => [Math.max(0, X(iv.start)), Math.min(W, X(iv.end))]);
   if (spans.length) {
     ctx.save();
-    ctx.globalAlpha = overlap.kind === "work" ? 0.16 : 0.1;
+    ctx.globalAlpha = overlap.kind === "work" ? 0.16 : overlap.kind === "waking" ? 0.1 : 0.07;
     ctx.fillStyle = c.accent;
     for (const [a, b] of spans) ctx.fillRect(a, 0, b - a, H);
     ctx.restore();
@@ -92,6 +96,12 @@ export function drawStrip(cv: HTMLCanvasElement, L: StripLayout, row: StripRow, 
     ctx.setLineDash([]);
   }
   ctx.restore();
+  if (c.edge && c.edge !== "transparent") {
+    ctx.strokeStyle = c.edge;
+    ctx.lineWidth = 1;
+    roundRect(ctx, 0.5, SY + 0.5, W - 1, SH - 1, 6.5);
+    ctx.stroke();
+  }
 
   // Working hours: a bar under the sky, absent at weekends.
   ctx.fillStyle = c.ink;
@@ -100,39 +110,52 @@ export function drawStrip(cv: HTMLCanvasElement, L: StripLayout, row: StripRow, 
     if (isWorking(k.wall, row.hours)) {
       const x0 = Math.floor(k.x);
       const x1 = Math.ceil(k.x + q);
-      ctx.fillRect(x0, SY + SH + 4, x1 - x0, 4);
+      ctx.fillRect(x0, SY + SH + gap, x1 - x0, gap);
     }
   }
 
+  const cx = Math.round(W / 2);
   const every = W < 520 ? 6 : 3;
-  ctx.font = `500 11px ${c.cond}`;
+  ctx.font = `500 ${tick}px ${c.cond}`;
   ctx.fillStyle = c.muted;
   ctx.textAlign = "center";
-  for (const k of L.marks) if (k.wall.minute === 0 && k.wall.hour !== 0 && k.wall.hour % every === 0) ctx.fillText(pad(k.wall.hour), k.x, H - 3);
+  for (const k of L.marks) {
+    if (k.wall.minute !== 0 || k.wall.hour === 0 || k.wall.hour % every !== 0) continue;
+    if (k.x < 10 || k.x > W - 10 || Math.abs(k.x - cx) < 9) continue; // clear of the edges and the cursor
+    ctx.fillText(pad(k.wall.hour), k.x, H - 3);
+  }
 
-  // Each local date is labelled where it starts; the one at the left edge stays put.
-  ctx.textAlign = "left";
+  // Each local date is labelled where it starts, beside its midnight line. A label that would run
+  // under the cursor or off the right edge goes on the other side of its line; the date at the
+  // left edge stays put until the next one pushes it out.
   ctx.font = `600 13px ${c.cond}`;
+  let firstLeft = Infinity;
   for (const d of L.days) {
+    const w = ctx.measureText(d.label).width;
+    const hits = (x: number) => x < cx + 9 && x + w > cx - 9;
+    let x = d.x + 6;
+    if ((hits(x) || x + w > W - 2) && d.x - 6 - w >= 0) x = d.x - 6 - w;
+    if (hits(x)) x = cx + 10; // a midnight right at the cursor: its label goes just past it
     ctx.fillStyle = c.ink;
     ctx.fillRect(Math.round(d.x) - 0.75, 3, 1.5, SY - 3);
-    ctx.fillText(d.label, d.x + 6, 14);
+    ctx.textAlign = "left";
+    ctx.fillText(d.label, x, 14);
+    firstLeft = Math.min(firstLeft, Math.min(x, d.x));
   }
   const lw = ctx.measureText(L.edgeLabel).width;
-  const lx = Math.min(4, (L.days.length ? L.days[0].x : Infinity) - lw - 14);
-  if (lx + lw > 0) {
+  const lx = Math.min(4, firstLeft - lw - 10);
+  if (lx + lw > 0 && !(lx < cx + 9 && lx + lw > cx - 9)) {
     ctx.fillStyle = c.muted;
     ctx.fillText(L.edgeLabel, lx, 14);
   }
 
   // The cursor, fixed at the centre.
-  const cx = Math.round(W / 2);
   ctx.globalAlpha = 0.75;
   ctx.fillStyle = c.ground;
   ctx.fillRect(cx - 2.5, SY, 5, SH);
   ctx.globalAlpha = 1;
   ctx.fillStyle = c.ink;
-  ctx.fillRect(cx - 1, 0, 2, H - 15);
+  ctx.fillRect(cx - 1, 0, 2, SY + SH + 2 * gap + 1);
   ctx.fillStyle = c.accent;
   ctx.beginPath();
   ctx.moveTo(cx - 6, 0);
