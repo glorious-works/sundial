@@ -25,7 +25,7 @@ Checked on Saturday 21 November 2026, in a logged-in view with a custom city lis
 
 - **Rows.** Each row shows its label (city, plus an optional personal label), the local time at the cursor in large type, weekday and date (with "+1 day" or "−1 day" when it differs from home), an offset badge ("+11h"), and the sky state and working status at the cursor ("Twilight · off work"). Beside it sits a horizontal strip with the row's own midnights marked and labelled "Sun 22 Nov"; the day containing the strip's left edge keeps a sticky label.
 - **Home.** The browser's zone (`Intl.DateTimeFormat().resolvedOptions().timeZone`) is the home row, pinned first, with a manual override. Other rows follow in order of offset.
-- **Default roster.** A first visit shows the home zone plus London, New York and Sydney (proposal). Anyone's own roster lives in their link.
+- **Default roster.** A first visit shows only the home zone, with the city search open, so people add the cities they keep track of (Stephan, 21 Nov 2026). Anyone's own roster lives in their link.
 - **Cursor.** One cursor, fixed at the centre of every strip, starts at now and follows the clock. Drag a strip or scroll sideways to move time, click a moment to centre it, use the arrow keys for 15 minutes (Shift for an hour), and press Now to return. Every row's time, weekday and date update with it.
 - **Colour model.** Sun elevation is calculated client-side for each slice of the strip and each city's coordinates, then mapped to bands that blend into a gradient rather than blocks. Palette, from the Glorious Works brand:
 
@@ -38,7 +38,7 @@ Checked on Saturday 21 November 2026, in a logged-in view with a custom city lis
 
   The bands also step in brightness from dark to light, so they read without relying on hue. Exact stops are in the prototype and are tuned there first, in light and dark themes. A zone with no known coordinates gets a neutral strip.
 - **Working hours.** A bar under each strip, 09:00 to 17:30 Monday to Friday by default and editable per row, absent at weekends.
-- **Overlap.** Columns where every row is inside working hours are highlighted. When there are none, the board says so and falls back to shared waking hours, 07:00 to 22:00 by default. For London, Chicago and Sydney in November that fallback finds London 20:00 to 22:00, which is Sydney 07:00 to 09:00 the next morning and Chicago 14:00 to 16:00.
+- **Overlap.** Columns where every row is inside working hours are highlighted. When there are none, the board says so and falls back to shared waking hours, 07:00 to 22:00 by default. For London, Chicago and Sydney in November that fallback finds London 20:00 to 22:00, which is Sydney 07:00 to 09:00 the next morning and Chicago 14:00 to 16:00. When there are no shared waking hours either, the board names the best time instead: the quarter hours that leave the rows least far outside waking hours in total, the middle of the longest such run, and who is up early, up late or asleep then (Stephan, 21 Nov 2026). For London, New York, Delhi, Tokyo and Sydney on Sat 21 Nov 2026 that is 11:30 London, with New York up early (06:30) and Sydney up late (22:30).
 - **Gap changes.** When any row's offset from home changes within the next four weeks of the cursor, a line under the row says when and to what, for example "Gap becomes +9h on Sat 3 Apr at 17:00 London time". Days of 23 and 25 hours render at their true length.
 - **Copy a time.** A one-line summary of the cursor time, ready to paste, for example "Mon 23 Nov, 07:00 London / 18:00 Sydney / 01:00 Chicago". Rows whose date differs from home's carry their date in brackets.
 - **Adding a city.** A search box over a curated city list holding name, country, IANA zone and coordinates. Abbreviations such as AEDT are displayed but never accepted as input, since they are ambiguous.
@@ -84,14 +84,14 @@ Delhi never changes its clocks, so its gap moves only when London's does.
 - **State:** the roster in the URL hash, which browsers never send to the server, mirrored to `localStorage`. Personal labels stay in `localStorage` unless the user chooses to put them in a link. One bookmarked link per device replaces an account.
 - **Type:** Barlow, Barlow Condensed and League Gothic, as on glorious.works.
 - **Tests:** Vitest and Playwright as above, run in CI.
-- **Hosting:** Vercel, on a subdomain such as `time.glorious.works`. The Hobby plan covers non-commercial use, which this is while nothing sells.
+- **Hosting:** glorious.works/sundial (Stephan, 21 Nov 2026), on SiteGround beside the site: a Next.js static export with `basePath: "/sundial"`, deployed by the repo's own Publish workflow. Vercel served the first deploy and goes once the path is live.
 
 ## Project conventions
 
 - **Public repo, personal data out.** No real people's names, employers or personal rosters in code, defaults, test fixtures or commit history.
 - **AI label.** The footer carries "Made with AI: colophon", linking to https://glorious.works/colophon/, and the colophon gains a line for the app, because its "no JavaScript and no cookies" claim describes the site, while the app runs JavaScript and keeps settings in `localStorage`.
 - **Commits and merges.** Commits are authored as `Glorious Works <hello@glorious.works>`, set in the repo's git config. PRs are merged locally with `git merge --ff-only` on `main` and then pushed, never with GitHub's merge button or `gh pr merge`, because GitHub authors those commits as whoever merges.
-- **Works.** Sundial is listed in the Works section of glorious.works only once it is in real use.
+- **Works.** Sundial is listed in the Works section of glorious.works as an App (Stephan, 21 Nov 2026: Works takes apps, and anything non-commercial).
 
 ## Out of scope for v1
 
@@ -100,6 +100,5 @@ Accounts and any sync beyond the link, calendar integration, meeting polls, per-
 ## Open questions
 
 1. **Name.** Sundial is a working title.
-2. **Licence.** Recommend none for now (readable, not reusable) until there is a reason to let others reuse the code.
-3. **Subdomain.** `time.glorious.works` unless there is a better one.
-4. **Default roster** for first-time visitors: the proposal above.
+
+Decided on 21 Nov 2026 (Stephan): the licence is MIT; the address is the path glorious.works/sundial rather than a subdomain; a first visit shows only the home zone.
