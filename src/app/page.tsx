@@ -1,3 +1,5 @@
+import { Sundial } from "@/components/Sundial";
+
 export default function Home() {
-  return <main>Sundial</main>;
+  return <Sundial />;
 }
