@@ -9,6 +9,11 @@ const CHI = "America/Chicago";
 const BOARD = "#cities=london-gb,sydney-au,chicago-us";
 const LONDON_HOME = `${BOARD}&home=london-gb`;
 
+// The production build carries GoatCounter's pixel; tests must never count as page views.
+test.beforeEach(async ({ context }) => {
+  await context.route("https://gloriousworks.goatcounter.com/**", (route) => route.abort());
+});
+
 async function open(page: Page, at: number, hash = "") {
   await page.clock.setFixedTime(new Date(at));
   await page.goto("./" + hash);
@@ -262,6 +267,8 @@ test.describe("static page", () => {
     expect(text).not.toMatch(/Today in/);
     await expect(page.getByTestId("row")).toHaveCount(0);
     await expect(page.getByRole("link", { name: "Made with AI: colophon" })).toHaveAttribute("href", "https://glorious.works/colophon/");
+    // The page-view pixel names the path only, never a board.
+    await expect(page.locator("img.counter")).toHaveAttribute("src", "https://gloriousworks.goatcounter.com/count?p=%2Fsundial%2F&t=Sundial");
     await context.close();
   });
 });

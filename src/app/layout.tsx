@@ -18,10 +18,22 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
+// Page views, counted by GoatCounter's tracking pixel, as on the rest of glorious.works: one
+// 1 x 1 image, no cookies, no script. It names only the path, never the hash, so no board
+// ever leaves the browser (browsers do not send the hash, not even in the Referer header).
+// Production builds only, so `next dev` counts nothing; Playwright blocks the request.
+const COUNTER = "https://gloriousworks.goatcounter.com/count?p=%2Fsundial%2F&t=Sundial";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-GB" className={`${barlow.variable} ${barlowCondensed.variable} ${leagueGothic.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        {process.env.NODE_ENV === "production" && (
+          // eslint-disable-next-line @next/next/no-img-element -- a counting pixel, not an image to optimise
+          <img className="counter" src={COUNTER} alt="" width={1} height={1} aria-hidden="true" />
+        )}
+      </body>
     </html>
   );
 }

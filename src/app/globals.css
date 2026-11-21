@@ -137,6 +137,7 @@
   .site-footer { margin-top: 20px; border-top: 1px solid var(--rule); padding-block: 20px calc(32px + env(safe-area-inset-bottom, 0px)); color: var(--muted); font-size: 13px; }
   .site-footer a { color: inherit; text-underline-offset: 3px; }
   .site-footer a:hover { color: var(--ink); }
+  .counter { position: absolute; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
   .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--ground); padding: 10px 16px; border-radius: 8px; font-size: 14px; max-width: calc(100% - 32px); z-index: 5; box-shadow: var(--float); }
 
   @media (prefers-reduced-motion: reduce) {
