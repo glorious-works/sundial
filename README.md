@@ -18,4 +18,4 @@ npm run dev
 
 Checks: `./node_modules/.bin/tsc --noEmit`, `npm run lint`, `npm test`, then `npm run build && npm run test:e2e` (Playwright; first run `npx playwright install chromium`).
 
-Made with AI: [colophon](https://glorious.works/colophon/).
+Made with AI: [colophon](https://glorious.works/colophon/). Licensed under the [MIT licence](LICENSE).
