@@ -30,6 +30,7 @@ Run these before committing; CI runs the same ones. They must pass on `main`.
 npm ci
 ./node_modules/.bin/tsc --noEmit
 npm run lint
+npm test
 npm run build
 ```
 
