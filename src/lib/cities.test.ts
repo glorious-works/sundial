@@ -36,6 +36,21 @@ describe("city search", () => {
     expect(searchCities("japan").map((c) => c.id)).toEqual(["osaka-jp", "tokyo-jp"]);
   });
 
+  it("finds a country by any of its words or its short name, and a city by several words", () => {
+    const countries = (q: string) => [...new Set(searchCities(q).map((c) => c.cc))];
+    expect(countries("zealand")).toEqual(["NZ"]);
+    expect(countries("kingdom")).toEqual(["GB"]);
+    // Ukraine starts with "uk" too, so it is found, but after the country called UK.
+    expect(countries("UK")).toEqual(["GB", "UA"]);
+    expect(countries("USA")).toEqual(["US"]);
+    expect(countries("uae")).toEqual(["AE"]);
+    expect(searchCities("UK").map((c) => c.id)).toContain("london-gb");
+    expect(searchCities("London UK")[0].id).toBe("london-gb");
+    expect(searchCities("new york usa")[0].id).toBe("new-york-us");
+    expect(searchCities("sydney australia").map((c) => c.id)).toEqual(["sydney-au"]);
+    expect(searchCities("london japan")).toEqual([]);
+  });
+
   it("never accepts zone abbreviations, which are ambiguous", () => {
     for (const abbr of ["AEDT", "AEST", "CST", "IST", "BST", "EST", "PST", "GMT", "UTC"]) {
       expect(isAbbreviation(abbr), abbr).toBe(true);

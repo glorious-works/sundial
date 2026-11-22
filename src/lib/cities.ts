@@ -24,7 +24,7 @@ export const cityById = (id: string) => BY_ID.get(id);
 const fold = (s: string) =>
   s
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "") // combining accents, split off by NFD
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
@@ -45,25 +45,37 @@ const ABBREVIATIONS = new Set(
 /** True when the query is a zone abbreviation typed as one (in capitals): shown on the board, never accepted as input. */
 export const isAbbreviation = (query: string) => ABBREVIATIONS.has(query.trim()) && query.trim() === query.trim().toUpperCase();
 
+// Short names people type for a country, by ISO code: UK for the United Kingdom, and so on.
+const COUNTRY_AKA: Record<string, string> = { GB: "uk britain", US: "usa us", AE: "uae" };
+
+/** True when some word of s starts with w. */
+const startsWord = (s: string, w: string) => s.split(" ").some((x) => x.startsWith(w));
+
 /**
- * Search by city name, other name, country or IANA zone. Zone abbreviations such as AEDT
- * are never matched: they are ambiguous, so they are shown but not accepted as input.
+ * Search by city name, other name, country (or its short name, such as UK) or IANA zone, and
+ * by several words at once ("London UK"). Zone abbreviations such as AEDT are never matched:
+ * they are ambiguous, so they are shown but not accepted as input.
  */
 export function searchCities(query: string, limit = 8): City[] {
   const q = fold(query);
   if (!q || isAbbreviation(query)) return [];
+  const words = q.split(" ");
   const scored: [number, City][] = [];
   for (const c of CITIES) {
     const name = fold(c.name);
     const aka = c.aka ? fold(c.aka) : "";
     const zone = fold(c.zone.replace(/_/g, " "));
     const country = fold(c.country);
+    const countryAka = COUNTRY_AKA[c.cc] ?? "";
     let score = -1;
     if (name === q || aka === q) score = 0;
     else if (name.startsWith(q) || aka.startsWith(q)) score = 1;
-    else if (name.split(" ").some((w) => w.startsWith(q))) score = 2;
-    else if (country.startsWith(q)) score = 3;
-    else if (zone.startsWith(q) || zone.split(" ").some((w) => w.startsWith(q))) score = 4;
+    else if (startsWord(name, q)) score = 2;
+    // A whole country word ranks above the start of one: UK finds Britain before Ukraine.
+    else if (country === q || `${country} ${countryAka}`.split(" ").includes(q)) score = 3;
+    else if (country.startsWith(q) || startsWord(country, q) || startsWord(countryAka, q)) score = 4;
+    else if (zone.startsWith(q) || startsWord(zone, q)) score = 5;
+    else if (words.length > 1 && words.every((w) => startsWord(`${name} ${aka} ${country} ${countryAka}`, w))) score = 6;
     if (score >= 0) scored.push([score, c]);
   }
   return scored

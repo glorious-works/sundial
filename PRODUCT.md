@@ -25,10 +25,10 @@ A time zone board that makes the moving arithmetic of time zones unnecessary: on
 
 ## Operating Context
 
-- One page. Rows: home first (the browser's zone, or a city the user chose), then the user's cities. One cursor fixed at the centre of every strip; it follows the clock until moved by dragging, sideways scrolling, clicking, the arrow keys or the hour buttons, and returns with Live.
+- One page. Rows: home first (the browser's zone, or a city the user chose), then the user's cities. One cursor fixed at the centre of every strip; it follows the clock until moved by dragging, sideways scrolling, clicking, the arrow keys or the hour buttons, and returns with Back to now (or the Home key).
 - A first visit shows only the home zone and the city search; people add the cities they keep track of from a curated list (name, country, zone, coordinates). Zone abbreviations such as IST are shown, never accepted as input, because they are ambiguous.
 - The copy line ("Mon 23 Nov, 07:00 London / 18:00 Sydney / 01:00 Chicago") is pasted into messages and invitations.
-- The overlap line names shared working hours across every row, or says there are none and falls back to shared waking hours (07:00 to 22:00).
+- The overlap line names shared working hours across every row, or says there are none and falls back to shared waking hours (07:00 to 22:00). When there are none of those either, it names the best time and who is up early, up late or asleep then.
 - Sharing a board means sharing its link.
 
 ## Capabilities and Constraints

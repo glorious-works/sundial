@@ -195,11 +195,11 @@ A warm print palette from glorious.works, with a sky ramp that only the strips m
 The bands also step from dark to light, so they read without relying on hue. Exact stops live in `src/lib/sun.ts` and are tuned in the prototype first, in both themes.
 
 ### Neutral
-- **Cream** (#FFF8E7): the ground in the light theme; text on Ink and Tomato.
+- **Cream** (#FFF8E7): the ground in the light theme; text on Ink, and on Tomato in the light theme (4.8:1).
 - **Bench Umber** (#655D4B; #A8A28F in the dark theme): secondary text, hour ticks, the sticky day label, hints, placeholders, field borders (6.2:1, so fields read as fields), and the readings while the cursor is not now.
 - **Parchment Rule** (#E6DABD; #262B3B dark): row dividers, the Live pill's quiet outline, the pressed state of a button.
 - **Pale Wheat** (#F4E8C8; #1F2433 dark): offset badges, the edit panels, a button's hover, the highlighted search result.
-- **Night Bench** (#10131D): the ground in the dark theme. Night skies are close to it, so in the dark theme each strip carries a faint Cream hairline (22%) to keep its edge.
+- **Night Bench** (#10131D): the ground in the dark theme, and the text on its Tomato (5.1:1, where Cream would be 3.4:1). Night skies are close to it, so in the dark theme each strip carries a faint Cream hairline (22%) to keep its edge.
 
 ### Named Rules
 **The Sky Is Data Rule.** The sky ramp is never decoration. It appears only in a strip or a swatch, and there it always means the sun's real elevation over that city at that moment. A zone without coordinates gets a neutral striped strip instead of a guessed sky.
@@ -217,7 +217,7 @@ The bands also step from dark to light, so they read without relying on hue. Exa
 ### Hierarchy
 - **Display** (400, clamp(56px, 9vw, 88px), 0.86, uppercase): the wordmark on a first visit, with a Tomato full stop.
 - **Wordmark** (400, 36px, 0.86, uppercase): the wordmark in the slim bar once the board has cities.
-- **Reading** (400, 46px, 1; 40px on phones, tabular figures): each row's local time. The largest thing in every row.
+- **Reading** (400, 46px, 1, tabular figures): each row's local time, the same size on phones. The largest thing in every row.
 - **Today** (400, 30px, 1; 21px in the slim bar): today's date in home time in the brand band, the only page-level date.
 - **Title** (600, 17px): each row's weekday and date.
 - **Label** (600, 14px, 0.08em, uppercase): city names; the strip's day labels use the same face at 13px.
@@ -268,12 +268,12 @@ Tactile and confident: they look like switches and behave like them.
 - **Hover / Active / Focus:** Pale Wheat and a 1px lift with the Lift shadow on hover; pressed 1px in, flat, on Parchment Rule when active; a 2px Tomato focus ring offset by 3px.
 - **Solid:** Ink fill with Cream text, for a mode that is on: Done while editing.
 - **Live:** while the board follows the clock, a quiet pill with a Parchment Rule outline and a Tomato dot, named "Live: showing now".
-- **Back to now:** when the cursor has moved, a Tomato pill with Cream text and, after a hairline divider, the distance from now in tabular figures ("+3h 15m", "+108 days").
+- **Back to now:** when the cursor has moved, a Tomato pill with Cream text (Night Bench in the dark theme) and, after a hairline divider, the distance from now in tabular figures ("+3h 15m", "+108 days").
 - **Small:** 13px text, 5px 12px, at least 32px tall (36px on phones), for row actions in the edit panel. Disabled at 35% opacity.
 
 ### Badges
 - **Offset badge:** Pale Wheat, 4px radius, condensed 12px with tabular figures ("+11h", "−5h", "+5:30").
-- **Home badge:** the same shape in Tomato with Cream text.
+- **Home badge:** the same shape in Tomato with Cream text (Night Bench in the dark theme).
 
 ### Inputs / Fields
 - **Style:** a slightly lighter field than the ground (#FFFDF6; #161A26 dark), 1.5px Bench Umber border, 6px radius, Barlow 15px, Bench Umber placeholder. The city search is 40px tall.
