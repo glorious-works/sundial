@@ -116,6 +116,27 @@ test.describe("home and today", () => {
     await expect(page.getByTestId("row")).toHaveCount(2);
     await expect(page).toHaveURL(/#cities=delhi-in$/);
   });
+
+  test.describe("a browser in India", () => {
+    // Chrome reports this zone by its old name, Asia/Calcutta.
+    test.use({ timezoneId: "Asia/Kolkata" });
+
+    test("finds its city, with a real sky, and adding Delhi gives no second row", async ({ page }, info) => {
+      test.skip(info.project.name !== LON, "the zone is set here, so one project is enough");
+      await open(page, Date.UTC(2026, 10, 21, 13, 18));
+      const home = page.getByTestId("row");
+      await expect(home).toHaveCount(1);
+      await expect(home).toHaveAttribute("data-zone", "Asia/Kolkata");
+      await expect(home).toHaveAttribute("data-name", "Kolkata");
+      await expect(home.getByTestId("state")).not.toContainText("Sky unknown");
+      const search = page.getByRole("combobox", { name: "Add a city" });
+      await search.fill("Delhi");
+      await search.press("Enter");
+      await expect(page.getByTestId("row")).toHaveCount(1);
+      await expect(page.getByTestId("row")).toHaveAttribute("data-name", "Delhi");
+      await expect(page.getByTestId("row")).toHaveAttribute("data-home", "true");
+    });
+  });
 });
 
 test.describe("overlap", () => {
@@ -258,6 +279,13 @@ test.describe("editing and persistence", () => {
 });
 
 test.describe("static page", () => {
+  test("the page-view pixel is not preloaded ahead of the page", async ({ request }) => {
+    const html = await (await request.get("./")).text();
+    expect(html).toContain("gloriousworks.goatcounter.com/count");
+    expect(html).not.toMatch(/<link[^>]+goatcounter/);
+    expect(html).not.toMatch(/HL\[[^\]]*goatcounter/);
+  });
+
   test("ships no time: nothing time-dependent is in the HTML", async ({ browser }) => {
     const context = await browser.newContext({ javaScriptEnabled: false });
     const page = await context.newPage();

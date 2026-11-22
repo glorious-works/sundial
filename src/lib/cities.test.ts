@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import data from "@/data/cities.json";
 import { CITIES, cityForZone, isAbbreviation, searchCities } from "./cities";
+import { canonicalZone } from "./time";
 
 describe("city list", () => {
   it("has unique, link-safe ids and zones this runtime knows", () => {
@@ -8,6 +9,14 @@ describe("city list", () => {
     expect(new Set(ids).size).toBe(ids.length);
     for (const id of ids) expect(id).toMatch(/^[a-z0-9-]+$/);
     expect(CITIES.length).toBe(data.length);
+  });
+
+  it("knows every city's zone by whatever name this runtime reports for it", () => {
+    // V8 says Asia/Calcutta for Asia/Kolkata; a browser in that zone must still find its city.
+    for (const c of CITIES) {
+      const reported = new Intl.DateTimeFormat("en-US", { timeZone: c.zone }).resolvedOptions().timeZone;
+      expect(canonicalZone(reported), `${c.zone} reported as ${reported}`).toBe(c.zone);
+    }
   });
 
   it("has plausible coordinates", () => {

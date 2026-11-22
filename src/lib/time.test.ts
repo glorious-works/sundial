@@ -149,6 +149,28 @@ describe("spec gap table (London's gaps for the coming year)", () => {
     }
   });
 
+  it("finds the same change wherever the cursor sits, and skips gaps undone within a day", () => {
+    const NYC = "America/New_York";
+    // Four weeks before the US changes: every quarter hour of a day, so every phase of the scan.
+    const start = Date.UTC(2027, 1, 20);
+    for (let t = start; t < start + DAY; t += 15 * MIN) {
+      // New York and London: lasting, on 14 Mar (and again on 28 Mar).
+      expect(nextGapChange(NYC, LON, t)).toEqual({ at: Date.UTC(2027, 2, 14, 7), from: -300, to: -240 });
+      // Chicago and Los Angeles change an hour and three hours after New York, then the gap is back.
+      expect(nextGapChange(CHI, NYC, t)).toBeNull();
+      expect(nextGapChange(LAX, NYC, t)).toBeNull();
+    }
+    // Auckland's clocks go back two hours before Sydney's, on the same night.
+    const apr = Date.UTC(2027, 2, 10);
+    for (let t = apr; t < apr + DAY; t += 15 * MIN) expect(nextGapChange(SYD, "Pacific/Auckland", t)).toBeNull();
+  });
+
+  it("looks no further than the horizon, even part way through a step", () => {
+    const before = Date.UTC(2027, 3, 3, 16) - 3 * HOUR; // three hours before Sydney's change
+    expect(nextGapChange(SYD, LON, before, 2 * HOUR)).toBeNull();
+    expect(nextGapChange(SYD, LON, before, 4 * HOUR)?.at).toBe(Date.UTC(2027, 3, 3, 16));
+  });
+
   it("Delhi never changes its clocks, so its gap moves only when London's does", () => {
     for (let t = Date.UTC(2026, 10, 21); t < Date.UTC(2027, 10, 21); t += 6 * HOUR) {
       expect(offsetMin(DEL, t)).toBe(330);

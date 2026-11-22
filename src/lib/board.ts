@@ -50,10 +50,15 @@ export interface Overlap {
 
 const minutesOf = (w: Wall) => w.hour * 60 + w.minute;
 
-/** Minutes a quarter hour starting at m lies outside h (0 when wholly inside). */
-function outsideBy(m: number, h: WorkHours): number {
-  if (m >= h.start && m + 15 <= h.end) return 0;
-  return m >= h.end ? m + 15 - h.end : h.start - m;
+/**
+ * How far a quarter hour starting at m lies outside h, the shorter way round the clock, and on
+ * which side: midnight is 2h 15m after 22:00 (late), not 7h before 07:00. 0 when wholly inside.
+ */
+function distanceOutside(m: number, h: WorkHours): { by: number; late: boolean } {
+  if (m >= h.start && m + 15 <= h.end) return { by: 0, late: false };
+  const after = (m + 15 - h.end + 1440) % 1440;
+  const before = (h.start - m + 1440) % 1440;
+  return after < before ? { by: after, late: true } : { by: before, late: false };
 }
 
 /**
@@ -71,7 +76,7 @@ export function findOverlap(rows: BoardRow[], from: number, to: number, waking: 
   const segs = rows.map((r) => segments(r.zone, from, to));
   const slots: { t: number; debt: number }[] = [];
   for (let t = Math.ceil(from / Q) * Q; t < to; t += Q) {
-    slots.push({ t, debt: rows.reduce((sum, r, i) => sum + outsideBy(minutesOf(wallAt(t, offAt(segs[i], t))), waking), 0) });
+    slots.push({ t, debt: rows.reduce((sum, r, i) => sum + distanceOutside(minutesOf(wallAt(t, offAt(segs[i], t))), waking).by, 0) });
   }
   if (!slots.length) return { kind: "none", intervals: [] };
   const least = Math.min(...slots.map((s) => s.debt));
@@ -87,8 +92,8 @@ export function findOverlap(rows: BoardRow[], from: number, to: number, waking: 
   const outside: Outside[] = [];
   rows.forEach((r, i) => {
     const wall = wallAt(at, offAt(segs[i], at));
-    const by = outsideBy(minutesOf(wall), waking);
-    if (by > 0) outside.push({ row: i, wall, when: by > 120 ? "asleep" : minutesOf(wall) >= waking.end ? "late" : "early" });
+    const { by, late } = distanceOutside(minutesOf(wall), waking);
+    if (by > 0) outside.push({ row: i, wall, when: by > 120 ? "asleep" : late ? "late" : "early" });
   });
   return { kind: "best", intervals: [iv], best: { at, outside } };
 }

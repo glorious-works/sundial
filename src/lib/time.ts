@@ -52,6 +52,22 @@ export function isValidZone(zone: string): boolean {
   }
 }
 
+// Chrome and Node (V8) report some zones by their old names, so a browser in India says
+// Asia/Calcutta. These are the ones the city list uses under their current names; the unit test
+// checks every city's zone against what this runtime reports.
+const RENAMED: Record<string, string> = {
+  "America/Buenos_Aires": "America/Argentina/Buenos_Aires",
+  "America/Godthab": "America/Nuuk",
+  "Asia/Calcutta": "Asia/Kolkata",
+  "Asia/Katmandu": "Asia/Kathmandu",
+  "Asia/Rangoon": "Asia/Yangon",
+  "Asia/Saigon": "Asia/Ho_Chi_Minh",
+  "Europe/Kiev": "Europe/Kyiv",
+};
+
+/** A zone under the name the city list uses: Asia/Calcutta gives Asia/Kolkata. */
+export const canonicalZone = (zone: string) => RENAMED[zone] ?? zone;
+
 /** The zone's offset from UTC in minutes at instant ms. */
 export function offsetMin(zone: string, ms: number): number {
   const p: Record<string, string> = {};
@@ -131,25 +147,27 @@ export interface GapChange {
   to: number;
 }
 
-/** The first change in zone's offset from homeZone after from, within horizon. */
+/**
+ * The first lasting change in zone's offset from homeZone after from, within horizon. A change
+ * undone within a day is skipped: zones that move their clocks on the same night a few hours
+ * apart (New York and Chicago, Sydney and Auckland) differ only for those hours.
+ */
 export function nextGapChange(zone: string, homeZone: string, from: number, horizon = 28 * DAY): GapChange | null {
   const gapAt = (t: number) => offsetMin(zone, t) - offsetMin(homeZone, t);
   const g0 = gapAt(from);
+  const end = from + horizon;
   const step = 6 * HOUR;
-  let prev = from;
-  for (let t = from + step; t <= from + horizon; t += step) {
-    const g = gapAt(t);
-    if (g !== g0) {
-      let lo = prev;
-      let hi = t;
-      while (hi - lo > MIN) {
-        const mid = Math.floor((lo + hi) / 2);
-        if (gapAt(mid) === g0) lo = mid;
-        else hi = mid;
-      }
-      return { at: Math.floor(hi / Q) * Q, from: g0, to: g };
+  for (let prev = from; prev < end; prev += step) {
+    const t = Math.min(prev + step, end);
+    if (gapAt(t) === g0) continue;
+    let lo = prev;
+    let hi = t;
+    while (hi - lo > MIN) {
+      const mid = Math.floor((lo + hi) / 2);
+      if (gapAt(mid) === g0) lo = mid;
+      else hi = mid;
     }
-    prev = t;
+    if (gapAt(hi + DAY) !== g0) return { at: Math.floor(hi / Q) * Q, from: g0, to: gapAt(hi) };
   }
   return null;
 }

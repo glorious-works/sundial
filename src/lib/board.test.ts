@@ -79,6 +79,18 @@ describe("overlap", () => {
     expect(bestText(o, rows)).toBe("Best: 11:30 London, with New York up early (06:30) and Sydney up late (22:30).");
   });
 
+  it("counts a row just past midnight as up late, not as long before morning", () => {
+    // Midnight is 2h 15m past 22:00 (as a quarter hour), not 7h before 07:00, so the best run
+    // does not break off when New York's clock passes midnight.
+    const [from, to] = londonDay(2026, 11, 21);
+    const row = (name: string, zone: string): BoardRow => ({ name, zone, hours: DEFAULT_HOURS });
+    const rows = [london, row("Los Angeles", "America/Los_Angeles"), row("New York", "America/New_York"), row("Dubai", "Asia/Dubai"), row("Singapore", "Asia/Singapore"), row("Auckland", "Pacific/Auckland")];
+    const o = findOverlap(rows, from, to);
+    expect(o.kind).toBe("best");
+    expect(o.intervals).toEqual([{ start: Date.UTC(2026, 10, 21, 3), end: Date.UTC(2026, 10, 21, 6) }]);
+    expect(bestText(o, rows)).toBe("Best: 04:30 London, with London asleep (04:30) and New York up late (23:30).");
+  });
+
   it("calls a row more than two hours outside waking hours asleep", () => {
     // With waking hours of 09:00 to 12:00, London and Sydney cannot both be awake: every quarter
     // hour from 00:45 to 09:15 London leaves them 495 minutes outside in total; 05:00 is the middle.

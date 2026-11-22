@@ -1,6 +1,6 @@
 import { cityById, cityForZone, type City } from "./cities";
 import { DEFAULT_HOURS, hhmmCompact, parseHHMM, type WorkHours } from "./hours";
-import { offsetMin } from "./time";
+import { canonicalZone, offsetMin } from "./time";
 
 /** One city on the board. hours: undefined means the default, null means none. */
 export interface Entry {
@@ -51,14 +51,16 @@ export function defaultSettings(at: number): Settings {
   return { entries: byOffset(DEFAULT_ROSTER, at).map((id) => ({ id })), labels: {}, labelsInLink: false };
 }
 
-const isUTC = (zone: string) => /^(UTC|GMT|Etc\/.*|Universal|Zulu)$/.test(zone);
+// UTC under any of its names; not the fixed offsets such as Etc/GMT+5.
+const isUTC = (zone: string) => /^(Etc\/)?(UTC|UCT|GMT|GMT0|GMT[+-]0|Greenwich|Universal|Zulu)$/.test(zone);
 
 /**
  * The board's rows. Home is the chosen city, else the first city in the browser's zone, else
  * a row made from the browser's zone. A browser that reports only UTC gets no UTC row while the
  * board has a city: the first one stands in as home.
  */
-export function resolveRows(s: Settings, browserZone: string): Row[] {
+export function resolveRows(s: Settings, reportedZone: string): Row[] {
+  const browserZone = canonicalZone(reportedZone);
   const fromEntry = (e: Entry): Row => {
     const c = cityById(e.id)!;
     return {
@@ -110,7 +112,10 @@ export function encodeHash(s: Settings): string {
   return "#" + parts.join("&");
 }
 
-/** Reads a link's hash. Returns null when it holds no board; unknown cities are dropped. */
+/**
+ * Reads a link's hash. Unknown cities are dropped, and a link left with none (cut short, or
+ * mistyped) holds no board: null, so it never replaces the board this browser keeps.
+ */
 export function decodeHash(hash: string): { entries: Entry[]; labels: Record<string, string>; home?: string } | null {
   const fields = new Map<string, string>();
   for (const part of hash.replace(/^#/, "").split("&")) {
@@ -142,6 +147,7 @@ export function decodeHash(hash: string): { entries: Entry[]; labels: Record<str
       }
     }
   }
+  if (!entries.length) return null;
   const home = fields.get("home");
   return { entries, labels, home: home && entries.some((e) => e.id === home) ? home : undefined };
 }
@@ -184,18 +190,19 @@ export function writeStored(s: Settings): void {
 
 /**
  * The board to show: the link's if it has one (labels it lacks come from this browser),
- * else this browser's saved board, else the default.
+ * else this browser's saved board, else the default. Whether labels go in the link stays this
+ * browser's choice: a link that carries labels never switches it on, or this browser's own
+ * labels would join the sender's in the address bar.
  */
 export function loadSettings(hash: string, at: number): Settings {
   const stored = readStored();
   const fromLink = decodeHash(hash);
   if (fromLink) {
-    const linkHasLabels = Object.keys(fromLink.labels).length > 0;
     return {
       entries: fromLink.entries,
       labels: { ...(stored?.labels ?? {}), ...fromLink.labels },
       home: fromLink.home,
-      labelsInLink: linkHasLabels || !!stored?.labelsInLink,
+      labelsInLink: !!stored?.labelsInLink,
     };
   }
   if (stored) return { entries: stored.entries, labels: stored.labels, home: stored.home, labelsInLink: !!stored.labelsInLink };

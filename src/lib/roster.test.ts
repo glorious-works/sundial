@@ -58,6 +58,13 @@ describe("rows", () => {
   it("makes no UTC row: a UTC-only browser takes the first city as home", () => {
     expect(names(board(["london-gb", "sydney-au"]), "UTC")).toEqual(["London*", "Sydney"]);
     expect(names(board(["london-gb", "sydney-au"]), "Etc/UTC")).toEqual(["London*", "Sydney"]);
+    // A fixed offset is not UTC: it keeps a row of its own.
+    expect(names(board(["london-gb"]), "Etc/GMT+5")).toEqual(["GMT+5*", "London"]);
+  });
+
+  it("reads a zone the browser reports by its old name as the city list's zone", () => {
+    expect(names(board(["delhi-in"]), "Asia/Calcutta")).toEqual(["Delhi*"]);
+    expect(resolveRows(defaultSettings(NOV), "Europe/Kiev")[0]).toMatchObject({ name: "Kyiv", zone: "Europe/Kyiv", home: true, lat: 50.4501 });
   });
 
   it("names a home zone the list lacks after the zone", () => {
@@ -118,6 +125,25 @@ describe("link", () => {
     });
     expect(decodeHash("")).toBeNull();
     expect(decodeHash("#top")).toBeNull();
+    expect(decodeHash("#cities=")).toBeNull();
+    expect(decodeHash("#cities=lond")).toBeNull();
+  });
+
+  it("leaves this browser's board alone when a link holds no known city", () => {
+    writeStored(board(["tokyo-jp"]));
+    expect(loadSettings("#cities=", NOV).entries.map((e) => e.id)).toEqual(["tokyo-jp"]);
+    expect(loadSettings("#cities=atlantis-xx&home=atlantis-xx", NOV).entries.map((e) => e.id)).toEqual(["tokyo-jp"]);
+  });
+
+  it("never puts this browser's labels in the link because an incoming link carried some", () => {
+    writeStored(board(["tokyo-jp"], { labels: { "london-gb": "Private" } }));
+    const s = loadSettings("#cities=london-gb,sydney-au~Office", NOV);
+    expect(s.labels).toEqual({ "london-gb": "Private", "sydney-au": "Office" });
+    expect(s.labelsInLink).toBe(false);
+    expect(encodeHash(s)).toBe("#cities=london-gb,sydney-au");
+    // Someone who chose labels in the link keeps that choice.
+    writeStored(board(["tokyo-jp"], { labelsInLink: true }));
+    expect(loadSettings("#cities=london-gb", NOV).labelsInLink).toBe(true);
   });
 
   it("prefers the link to this browser's board, filling in labels from the browser", () => {
