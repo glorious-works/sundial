@@ -94,6 +94,8 @@ export function Board({ onHome }: { onHome: (info: HomeInfo) => void }) {
   const canvases = useRef(new Map<string, HTMLCanvasElement>());
   const drag = useRef<{ id: number; x: number; moved: number; cv: HTMLCanvasElement } | null>(null);
   const scrollTo = useRef<string | null>(null);
+  // After a removal, focus goes to a neighbour's Remove button, or to the search box.
+  const focusAfter = useRef<string | null>(null);
 
   // ---------- Persistence: the link and this browser ----------
   useEffect(() => {
@@ -182,6 +184,13 @@ export function Board({ onHome }: { onHome: (info: HomeInfo) => void }) {
     scrollTo.current = null;
     document.querySelector(`[data-key="${key}"]`)?.scrollIntoView({ block: "nearest" });
   }, [rows]);
+  useLayoutEffect(() => {
+    const key = focusAfter.current;
+    if (!key) return;
+    focusAfter.current = null;
+    const el = document.querySelector<HTMLElement>(`[data-key="${key}"] [data-remove]`) ?? document.querySelector<HTMLElement>(".search input");
+    el?.focus();
+  }, [rows]);
 
   // ---------- Moving time ----------
   // Screen readers hear the new time after a deliberate move, never on the clock's own ticks.
@@ -254,6 +263,12 @@ export function Board({ onHome }: { onHome: (info: HomeInfo) => void }) {
     const t = setTimeout(() => setToast(null), 2600);
     return () => clearTimeout(t);
   }, [toast]);
+  // The toast is for the eye; screen readers hear it through the announce region, which is
+  // always on the page (a live region added along with its text is often not read).
+  const notify = (text: string) => {
+    setToast(text);
+    setAnnounce(text);
+  };
   const copy = () => {
     const select = () => {
       const el = lineRef.current;
@@ -263,10 +278,10 @@ export function Board({ onHome }: { onHome: (info: HomeInfo) => void }) {
       const sel = getSelection();
       sel?.removeAllRanges();
       sel?.addRange(range);
-      setToast("This browser blocked copying, so the line is selected: copy it from there.");
+      notify("This browser blocked copying, so the line is selected: copy it from there.");
     };
     try {
-      navigator.clipboard.writeText(line).then(() => setToast("Copied"), select);
+      navigator.clipboard.writeText(line).then(() => notify("Copied"), select);
     } catch {
       select();
     }
@@ -331,6 +346,7 @@ export function Board({ onHome }: { onHome: (info: HomeInfo) => void }) {
                   onMove={(dir) => update((s) => moveCity(s, r.key, dir, homeEntryId))}
                   onHome={() => update((s) => ({ ...s, home: r.key }))}
                   onRemove={() => {
+                    focusAfter.current = [rows[i + 1], rows[i - 1]].find((x) => x?.entry)?.key ?? "search";
                     if (settings.entries.length === 1) setEditOpen(false);
                     update((s) => removeCity(s, r.key));
                     setAnnounce(`${r.name} removed`);
@@ -398,7 +414,7 @@ export function Board({ onHome }: { onHome: (info: HomeInfo) => void }) {
         {announce}
       </div>
       {toast && (
-        <div className="toast" role="status">
+        <div className="toast" aria-hidden="true">
           {toast}
         </div>
       )}
@@ -525,15 +541,16 @@ function RowEditor({ row: r, first, last, onLabel, onHours, onMove, onHome, onRe
         Label
         <input className="field w-40" type="text" maxLength={40} placeholder="such as Office" value={r.label} aria-label={`Label for ${r.name}`} onChange={(e) => onLabel(e.target.value)} />
       </label>
-      <label>
+      {/* Two inputs, so a group rather than a label: a label names one control. */}
+      <div className="hours" role="group" aria-label={`${r.name} working hours`}>
         Working hours
         <input className="field" type="time" step={900} value={hhmmColon(hours.start)} disabled={!r.hours} aria-label={`${r.name} working hours start`} onChange={(e) => setTime("start", e.target.value)} />
         to
         <input className="field" type="time" step={900} value={hhmmColon(hours.end)} disabled={!r.hours} aria-label={`${r.name} working hours end`} onChange={(e) => setTime("end", e.target.value)} />
-      </label>
+      </div>
       <label className="check">
         <input type="checkbox" checked={!r.hours} onChange={(e) => onHours(e.target.checked ? null : undefined)} />
-        No working hours
+        No working hours<span className="sr-only"> for {r.name}</span>
       </label>
       <span className="spacer" />
       {!r.home && (
@@ -544,12 +561,12 @@ function RowEditor({ row: r, first, last, onLabel, onHours, onMove, onHome, onRe
           <button className="btn small" type="button" disabled={last} aria-label={`Move ${r.name} down`} onClick={() => onMove(1)}>
             Down
           </button>
-          <button className="btn small" type="button" onClick={onHome}>
+          <button className="btn small" type="button" aria-label={`Make home: ${r.name}`} onClick={onHome}>
             Make home
           </button>
         </>
       )}
-      <button className="btn small" type="button" aria-label={`Remove ${r.name}`} onClick={onRemove}>
+      <button className="btn small" type="button" aria-label={`Remove ${r.name}`} data-remove onClick={onRemove}>
         Remove
       </button>
     </div>

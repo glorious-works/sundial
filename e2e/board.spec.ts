@@ -45,6 +45,7 @@ test.describe("spec acceptance table", () => {
     await expect(page.getByTestId("copy-line")).toHaveText(line);
     await page.getByRole("button", { name: "Copy" }).click();
     await expect(page.locator(".toast")).toHaveText("Copied");
+    await expect(page.getByTestId("announce")).toHaveText("Copied");
     expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(line);
   });
 
@@ -268,6 +269,13 @@ test.describe("editing and persistence", () => {
     await page.getByRole("button", { name: "Move Chicago up" }).click();
     await page.getByRole("button", { name: "Remove Tokyo" }).click();
     await expect(page).toHaveURL(/#cities=london-gb,chicago-us,sydney-au&home=london-gb$/);
+    // Focus moves on to the next row rather than falling to the page.
+    await expect(page.getByRole("button", { name: "Remove Sydney" })).toBeFocused();
+
+    // Each row's controls name their city.
+    await expect(page.getByRole("group", { name: "Chicago working hours" }).locator("input")).toHaveCount(2);
+    await expect(page.getByRole("button", { name: "Make home: Sydney" })).toBeVisible();
+    await expect(page.getByRole("checkbox", { name: "No working hours for Sydney" })).not.toBeChecked();
 
     await page.getByLabel("Chicago working hours start").fill("08:00");
     await expect(page).toHaveURL(/chicago-us@0800-1730/);
@@ -287,6 +295,7 @@ test.describe("editing and persistence", () => {
     await page.getByRole("button", { name: "Edit board" }).click();
     await page.getByRole("button", { name: "Remove Tokyo" }).click();
     await expect(page.getByTestId("row")).toHaveCount(1);
+    await expect(page.getByRole("combobox", { name: "Add a city" })).toBeFocused();
     await expect(page.getByLabel("Put personal labels in the link")).toHaveCount(0);
     await expect(page.getByText(/This device.s zone/)).toHaveCount(0);
     await expect(page.getByRole("button", { name: /^(Done|Edit board)$/ })).toHaveCount(0);
@@ -300,8 +309,10 @@ test.describe("editing and persistence", () => {
   test("the city search puts its results away when left, and a click on one still adds it", async ({ page }) => {
     await open(page, Date.UTC(2026, 10, 21, 13, 18), LONDON_HOME);
     const search = page.getByRole("combobox", { name: "Add a city" });
+    await expect(search).not.toHaveAttribute("aria-controls");
     await search.fill("tok");
     await expect(page.getByRole("listbox")).toBeVisible();
+    await expect(search).toHaveAttribute("aria-controls", (await page.getByRole("listbox").getAttribute("id"))!);
     await search.press("Tab");
     await expect(page.getByRole("listbox")).toHaveCount(0);
     await expect(search).toHaveValue("tok");

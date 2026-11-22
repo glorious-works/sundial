@@ -47,7 +47,7 @@ export function CitySearch({ onAdd, isOnBoard, homeZone, at }: Props) {
         role="combobox"
         aria-label="Add a city"
         aria-expanded={open && results.length > 0}
-        aria-controls={listId}
+        aria-controls={open && results.length > 0 ? listId : undefined}
         aria-activedescendant={open && active >= 0 ? `${listId}-${active}` : undefined}
         aria-autocomplete="list"
         placeholder="Add a city, such as Tokyo"
