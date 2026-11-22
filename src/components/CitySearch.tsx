@@ -16,9 +16,11 @@ export function CitySearch({ onAdd, isOnBoard, homeZone, at }: Props) {
   const [query, setQuery] = useState("");
   // -1 means "the first city not already on the board".
   const [chosen, setChosen] = useState(-1);
+  // Leaving the box puts the results away; the query stays, and they come back with focus.
+  const [away, setAway] = useState(false);
   const listId = useId();
   const results = searchCities(query);
-  const open = query.trim().length > 0;
+  const open = query.trim().length > 0 && !away;
   const enabled = results.map((c) => !isOnBoard(c.id));
   const active = chosen >= 0 ? chosen : enabled.indexOf(true);
   const step = (dir: 1 | -1) => {
@@ -55,7 +57,10 @@ export function CitySearch({ onAdd, isOnBoard, homeZone, at }: Props) {
         onChange={(e) => {
           setQuery(e.target.value);
           setChosen(-1);
+          setAway(false);
         }}
+        onFocus={() => setAway(false)}
+        onBlur={() => setAway(true)}
         onKeyDown={(e) => {
           if (e.key === "ArrowDown") {
             e.preventDefault();

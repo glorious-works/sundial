@@ -133,10 +133,10 @@ export function gapNote(change: GapChange, home: BoardRow): string {
   return `Gap becomes ${fmtGap(change.to)} on ${dayLabel(w)} at ${hhmm(w)} ${home.name} time`;
 }
 
-/** An interval as each row reads it: "20:00–22:00 London". */
-export function intervalText(iv: Interval, row: BoardRow, home?: Wall): string {
+/** An interval as each row reads it: "20:00–22:00 London", or with its date when it differs from home's. */
+export function intervalText(iv: Interval, row: BoardRow, home?: Wall, withYear = false): string {
   const a = wallOf(row.zone, iv.start);
   const b = wallOf(row.zone, iv.end);
-  const date = home && !sameDate(a, home) ? ` (${dayLabel(a)})` : "";
+  const date = home && !sameDate(a, home) ? ` (${dayLabel(a, withYear)})` : "";
   return `${hhmm(a)}–${hhmm(b)} ${row.name}${date}`;
 }

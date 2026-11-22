@@ -207,10 +207,11 @@ export function fmtGap(min: number): string {
   return (min > 0 ? "+" : "−") + h + (m ? ":" + pad(m) : "h");
 }
 
-/** How far the cursor is from now: "+15 min", "−3h 15m", "+2 days 4h". Minus is U+2212. */
+/** How far the cursor is from now: "+15 min", "−3h 15m", "+2 days 4h", or "0 min" within half a minute. Minus is U+2212. */
 export function fmtDistance(ms: number): string {
-  const sign = ms < 0 ? "−" : "+";
   const total = Math.round(Math.abs(ms) / MIN);
+  if (!total) return "0 min";
+  const sign = ms < 0 ? "−" : "+";
   const days = Math.floor(total / 1440);
   const h = Math.floor((total % 1440) / 60);
   const m = total % 60;

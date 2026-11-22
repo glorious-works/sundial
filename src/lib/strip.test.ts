@@ -44,6 +44,17 @@ describe("strip layout", () => {
     expect(s.cursorDay.hours).toBe(23);
   });
 
+  it("labels no midnight past the right edge", () => {
+    // London's Sun 22 Nov starts ten minutes past the right edge of a 24-hour phone strip.
+    const s = stripLayout("Europe/London", Date.UTC(2026, 10, 21, 11, 50), 375);
+    expect(s.t1).toBe(Date.UTC(2026, 10, 21, 23, 50));
+    expect(s.days.map((d) => d.label)).toEqual(["Sat 21 Nov"]);
+    for (const w of WIDTHS)
+      for (let t = Date.UTC(2026, 10, 21); t < Date.UTC(2026, 10, 22); t += Q) {
+        for (const d of stripLayout("Europe/London", t, w).days) expect(d.x).toBeLessThanOrEqual(w);
+      }
+  });
+
   it("shows 24, 30 or 36 hours depending on width", () => {
     expect(stripLayout("Europe/London", 0, 343).t1 - stripLayout("Europe/London", 0, 343).t0).toBe(24 * HOUR);
     expect(stripLayout("Europe/London", 0, 640).t1 - stripLayout("Europe/London", 0, 640).t0).toBe(30 * HOUR);

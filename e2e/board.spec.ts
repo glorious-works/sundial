@@ -178,6 +178,9 @@ test.describe("not now", () => {
     await page.getByRole("button", { name: "Forward one hour" }).click();
     await expect(row(page, LON).locator("[data-testid=date] > span").first()).toHaveText("Fri 1 Jan 2027");
     await expect(page.getByTestId("copy-line")).toHaveText("Fri 1 Jan 2027, 00:30 London / 11:30 Sydney / 18:30 Chicago (Thu 31 Dec 2026)");
+    await expect(page.getByTestId("overlap")).toHaveText(
+      "No shared working hours on Fri 1 Jan 2027. Shared waking hours, 07:00 to 22:00: 20:00–22:00 London / 07:00–09:00 Sydney (Sat 2 Jan 2027) / 14:00–16:00 Chicago",
+    );
   });
 
   test("coming back after 30 minutes away returns the board to now", async ({ page }) => {
@@ -215,6 +218,17 @@ test.describe("moving time", () => {
     await expect(row(page, LON).getByTestId("time")).toHaveText("12:30");
     await page.getByTestId("live").click();
     await expect(row(page, LON).getByTestId("time")).toHaveText("13:18");
+  });
+
+  test("a right-click on a strip moves nothing; a click there does", async ({ page }) => {
+    await open(page, Date.UTC(2026, 10, 21, 13, 18), LONDON_HOME);
+    const strip = page.locator("canvas.strip").first();
+    const box = (await strip.boundingBox())!;
+    const position = { x: box.width * 0.8, y: box.height / 2 };
+    await strip.click({ button: "right", position });
+    await expect(page.getByTestId("live")).toHaveAccessibleName("Live: showing now");
+    await strip.click({ position });
+    await expect(page.getByTestId("live")).toContainText("Back to now");
   });
 
   test("dragging a strip moves every row together", async ({ page }) => {
@@ -266,6 +280,35 @@ test.describe("editing and persistence", () => {
     await expect(page.getByTestId("row")).toHaveCount(3);
     await expect(page).toHaveURL(/#cities=london-gb,chicago-us@0800-1730,sydney-au~Office&home=london-gb$/);
     await expect(row(page, SYD).locator(".personal")).toHaveText("Office");
+  });
+
+  test("removing the last city closes edit mode, and adding one does not reopen it", async ({ page }) => {
+    await open(page, Date.UTC(2026, 10, 21, 13, 18), "#cities=tokyo-jp");
+    await page.getByRole("button", { name: "Edit board" }).click();
+    await page.getByRole("button", { name: "Remove Tokyo" }).click();
+    await expect(page.getByTestId("row")).toHaveCount(1);
+    await expect(page.getByLabel("Put personal labels in the link")).toHaveCount(0);
+    await expect(page.getByText(/This device.s zone/)).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /^(Done|Edit board)$/ })).toHaveCount(0);
+    const search = page.getByRole("combobox", { name: "Add a city" });
+    await search.fill("Tokyo");
+    await search.press("Enter");
+    await expect(page.getByRole("button", { name: "Edit board" })).toBeVisible();
+    await expect(page.getByTestId("row-editor")).toHaveCount(0);
+  });
+
+  test("the city search puts its results away when left, and a click on one still adds it", async ({ page }) => {
+    await open(page, Date.UTC(2026, 10, 21, 13, 18), LONDON_HOME);
+    const search = page.getByRole("combobox", { name: "Add a city" });
+    await search.fill("tok");
+    await expect(page.getByRole("listbox")).toBeVisible();
+    await search.press("Tab");
+    await expect(page.getByRole("listbox")).toHaveCount(0);
+    await expect(search).toHaveValue("tok");
+    await search.focus();
+    await page.getByRole("option", { name: /Tokyo, Japan/ }).click();
+    await expect(row(page, "Asia/Tokyo")).toBeVisible();
+    await expect(search).toHaveValue("");
   });
 
   test("the board works at 375px with no sideways scroll", async ({ page }) => {

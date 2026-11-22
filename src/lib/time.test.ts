@@ -193,6 +193,9 @@ describe("time helpers", () => {
     expect(fmtDistance(2 * HOUR)).toBe("+2h");
     expect(fmtDistance(DAY + 4 * HOUR)).toBe("+1 day 4h");
     expect(fmtDistance(108 * DAY)).toBe("+108 days");
+    // Within half a minute of now, as when the clock catches up with a cursor set ahead.
+    expect(fmtDistance(20e3)).toBe("0 min");
+    expect(fmtDistance(-20e3)).toBe("0 min");
   });
 
   it("localToInstant round-trips wall times, and lands after a skipped hour", () => {

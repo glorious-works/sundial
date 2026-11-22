@@ -74,11 +74,13 @@ export function Board({ onHome }: { onHome: (info: HomeInfo) => void }) {
   const repaint = useRepaintSignal();
   const [manual, setManual] = useState<number | null>(null);
   const [width, setWidth] = useState(0);
-  const [editing, setEditing] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [toast, setToast] = useState<string | null>(null);
   const [announce, setAnnounce] = useState("");
 
+  // Edit mode closes with the last city, which takes the Done button with it.
+  const editing = editOpen && settings.entries.length > 0;
   const live = manual === null;
   const cursor = manual ?? now;
   const rows = useMemo(() => resolveRows(settings, zone), [settings, zone]);
@@ -130,11 +132,12 @@ export function Board({ onHome }: { onHome: (info: HomeInfo) => void }) {
 
   // ---------- What every row shows ----------
   const layouts: (StripLayout | null)[] = useMemo(() => rows.map((r) => (width > 0 ? stripLayout(r.zone, cursor, width) : null)), [rows, cursor, width]);
+  const withYear = otherYear(cursor);
   const dayOverlap = useMemo(() => {
     if (rows.length < 2) return null;
     const { start, end } = dayBounds(home.zone, cursor);
-    return { day: dayLabel(wallOf(home.zone, cursor)), ...findOverlap(rows, start, end) };
-  }, [rows, home, cursor]);
+    return { day: dayLabel(wallOf(home.zone, cursor), withYear), ...findOverlap(rows, start, end) };
+  }, [rows, home, cursor, withYear]);
   const visibleOverlap: Overlap = useMemo(() => {
     const L = layouts[0];
     if (!L || rows.length < 2) return { kind: "none", intervals: [] };
@@ -142,7 +145,6 @@ export function Board({ onHome }: { onHome: (info: HomeInfo) => void }) {
     // When nothing is shared, wash the best time the overlap line names rather than another one.
     return o.kind === "best" && dayOverlap?.kind === "best" ? dayOverlap : o;
   }, [layouts, rows, dayOverlap]);
-  const withYear = otherYear(cursor);
   const line = copyLine(rows, cursor, withYear);
 
   useEffect(() => {
@@ -209,6 +211,8 @@ export function Board({ onHome }: { onHome: (info: HomeInfo) => void }) {
   }, [pph]);
 
   const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    // One finger, or the main mouse button: a right-click or a second finger moves nothing.
+    if (!e.isPrimary || e.button !== 0) return;
     drag.current = { id: e.pointerId, x: e.clientX, moved: 0, cv: e.currentTarget };
     e.currentTarget.setPointerCapture(e.pointerId);
     e.currentTarget.style.cursor = "grabbing";
@@ -224,7 +228,7 @@ export function Board({ onHome }: { onHome: (info: HomeInfo) => void }) {
   };
   const endDrag = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const d = drag.current;
-    if (!d) return;
+    if (!d || e.pointerId !== d.id) return;
     drag.current = null;
     d.cv.style.cursor = "";
     if (d.moved < 4 && e.type === "pointerup") {
@@ -310,7 +314,7 @@ export function Board({ onHome }: { onHome: (info: HomeInfo) => void }) {
             cursor={cursor}
             now={now}
             layout={layouts[i]}
-            note={notes[r.key]}
+            note={r.home ? undefined : notes[r.key]}
             canvasRef={(el) => {
               if (el) canvases.current.set(r.key, el);
               else canvases.current.delete(r.key);
@@ -327,6 +331,7 @@ export function Board({ onHome }: { onHome: (info: HomeInfo) => void }) {
                   onMove={(dir) => update((s) => moveCity(s, r.key, dir, homeEntryId))}
                   onHome={() => update((s) => ({ ...s, home: r.key }))}
                   onRemove={() => {
+                    if (settings.entries.length === 1) setEditOpen(false);
                     update((s) => removeCity(s, r.key));
                     setAnnounce(`${r.name} removed`);
                   }}
@@ -354,7 +359,7 @@ export function Board({ onHome }: { onHome: (info: HomeInfo) => void }) {
         />
         {others.length === 0 && <p className="hint">Add the cities you keep track of. Your board stays in this browser and in its link.</p>}
         {settings.entries.length > 0 && (
-          <button className={`btn${editing ? " solid" : ""}`} type="button" onClick={() => setEditing((x) => !x)}>
+          <button className={`btn${editing ? " solid" : ""}`} type="button" onClick={() => setEditOpen((x) => !x)}>
             {editing ? "Done" : "Edit board"}
           </button>
         )}
@@ -384,7 +389,7 @@ export function Board({ onHome }: { onHome: (info: HomeInfo) => void }) {
             </button>
           </div>
           <p className="overlap" data-testid="overlap">
-            {dayOverlap && <OverlapText o={dayOverlap} rows={rows} />}
+            {dayOverlap && <OverlapText o={dayOverlap} rows={rows} withYear={withYear} />}
           </p>
         </>
       )}
@@ -401,12 +406,12 @@ export function Board({ onHome }: { onHome: (info: HomeInfo) => void }) {
   );
 }
 
-function OverlapText({ o, rows }: { o: Overlap & { day: string }; rows: Row[] }) {
+function OverlapText({ o, rows, withYear }: { o: Overlap & { day: string }; rows: Row[]; withYear: boolean }) {
   const describe = () =>
     o.intervals
       .map((iv) => {
         const homeWall = wallOf(rows[0].zone, iv.start);
-        return rows.map((r) => intervalText(iv, r, homeWall)).join(" / ");
+        return rows.map((r) => intervalText(iv, r, homeWall, withYear)).join(" / ");
       })
       .join("; ");
   if (o.kind === "work")

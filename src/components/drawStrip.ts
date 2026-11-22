@@ -49,13 +49,17 @@ export function drawStrip(cv: HTMLCanvasElement, L: StripLayout, row: StripRow, 
   const H = Math.round(cv.clientHeight) || 78;
   const { SY, SH, gap, tick } = geometry(H);
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  if (cv.width !== Math.round(W * dpr) || cv.height !== H * dpr) {
-    cv.width = Math.round(W * dpr);
-    cv.height = H * dpr;
+  // Whole backing pixels: at 125% a 78px strip is 97.5, which the canvas would store as 97 and
+  // then reallocate on every frame for not matching.
+  const BW = Math.round(W * dpr);
+  const BH = Math.round(H * dpr);
+  if (cv.width !== BW || cv.height !== BH) {
+    cv.width = BW;
+    cv.height = BH;
   }
   const ctx = cv.getContext("2d");
   if (!ctx) return;
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.setTransform(BW / W, 0, 0, BH / H, 0, 0);
   ctx.clearRect(0, 0, W, H);
   const X = (t: number) => ((t - L.t0) / HOUR) * L.pph;
 
@@ -129,6 +133,7 @@ export function drawStrip(cv: HTMLCanvasElement, L: StripLayout, row: StripRow, 
   // under the cursor or off the right edge goes on the other side of its line; the date at the
   // left edge stays put until the next one pushes it out.
   ctx.font = `600 13px ${c.cond}`;
+  ctx.textAlign = "left"; // here, not in the loop: a strip with no midnight still draws its edge label
   let firstLeft = Infinity;
   for (const d of L.days) {
     const w = ctx.measureText(d.label).width;
@@ -138,7 +143,6 @@ export function drawStrip(cv: HTMLCanvasElement, L: StripLayout, row: StripRow, 
     if (hits(x)) x = cx + 10; // a midnight right at the cursor: its label goes just past it
     ctx.fillStyle = c.ink;
     ctx.fillRect(Math.round(d.x) - 0.75, 3, 1.5, SY - 3);
-    ctx.textAlign = "left";
     ctx.fillText(d.label, x, 14);
     firstLeft = Math.min(firstLeft, Math.min(x, d.x));
   }

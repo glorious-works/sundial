@@ -24,7 +24,7 @@ export interface StripLayout {
   segs: Segment[];
   /** A mark every quarter hour across the strip, in the row's own wall time. */
   marks: Mark[];
-  /** The first quarter hour of each local date inside the strip: where its label is drawn. */
+  /** The first quarter hour of each local date inside the strip (never past either edge): where its label is drawn. */
   days: DayMark[];
   /** The label of the day the strip's left edge is in, kept sticky at the left. */
   edgeLabel: string;
@@ -46,7 +46,7 @@ export function stripLayout(zone: string, cursor: number, width: number): StripL
   for (let t = Math.floor(t0 / Q) * Q; t <= t1 + Q; t += Q) {
     const wall = wallAt(t, offAt(segs, t));
     marks.push({ t, x: x(t), wall });
-    if (!sameDate(wall, prev) && x(t) >= 0) days.push({ t, x: x(t), label: dayLabel(wall) });
+    if (!sameDate(wall, prev) && x(t) >= 0 && x(t) <= width) days.push({ t, x: x(t), label: dayLabel(wall) });
     prev = wall;
   }
   const edgeLabel = dayLabel(wallAt(t0, offAt(segs, t0)));
