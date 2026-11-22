@@ -77,6 +77,7 @@ export function Board({ onHome }: { onHome: (info: HomeInfo) => void }) {
   const [editOpen, setEditOpen] = useState(false);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [toast, setToast] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const [announce, setAnnounce] = useState("");
 
   // Edit mode closes with the last city, which takes the Done button with it.
@@ -263,6 +264,11 @@ export function Board({ onHome }: { onHome: (info: HomeInfo) => void }) {
     const t = setTimeout(() => setToast(null), 2600);
     return () => clearTimeout(t);
   }, [toast]);
+  useEffect(() => {
+    if (!copied) return;
+    const t = setTimeout(() => setCopied(false), 1800);
+    return () => clearTimeout(t);
+  }, [copied]);
   // The toast is for the eye; screen readers hear it through the announce region, which is
   // always on the page (a live region added along with its text is often not read).
   const notify = (text: string) => {
@@ -281,7 +287,10 @@ export function Board({ onHome }: { onHome: (info: HomeInfo) => void }) {
       notify("This browser blocked copying, so the line is selected: copy it from there.");
     };
     try {
-      navigator.clipboard.writeText(line).then(() => notify("Copied"), select);
+      navigator.clipboard.writeText(line).then(() => {
+        setCopied(true);
+        notify("Copied");
+      }, select);
     } catch {
       select();
     }
@@ -401,7 +410,7 @@ export function Board({ onHome }: { onHome: (info: HomeInfo) => void }) {
               {line}
             </p>
             <button className="btn" type="button" onClick={copy}>
-              Copy
+              {copied ? "Copied" : "Copy"}
             </button>
           </div>
           <p className="overlap" data-testid="overlap">

@@ -21,6 +21,9 @@ export function Sundial() {
   // with only home on the board, opens it out with the lede.
   return (
     <>
+      <a className="skip-link" href="#main">
+        Skip to content
+      </a>
       <header className={today && !today.compact ? "band" : "band compact"}>
         <div className="wrap">
           <div>
@@ -36,7 +39,7 @@ export function Sundial() {
         </div>
       </header>
 
-      <main className="wrap">
+      <main id="main" className="wrap">
         {hydrated ? (
           <Board onHome={setToday} />
         ) : (
@@ -88,6 +91,10 @@ export function Sundial() {
 
       <footer className="site-footer">
         <div className="wrap">
+          <a href="https://glorious.works/">Glorious Works</a>
+          <span aria-hidden="true"> &middot; </span>
+          <a href="https://glorious.works/works/sundial/">About Sundial</a>
+          <span aria-hidden="true"> &middot; </span>
           <a href="https://glorious.works/colophon/">Made with AI: colophon</a>
         </div>
       </footer>

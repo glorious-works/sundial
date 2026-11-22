@@ -148,7 +148,7 @@ export function drawStrip(cv: HTMLCanvasElement, L: StripLayout, row: StripRow, 
   }
   const lw = ctx.measureText(L.edgeLabel).width;
   const lx = Math.min(4, firstLeft - lw - 10);
-  if (lx + lw > 0 && !(lx < cx + 9 && lx + lw > cx - 9)) {
+  if (lx >= 0 && !(lx < cx + 9 && lx + lw > cx - 9)) {
     ctx.fillStyle = c.muted;
     ctx.fillText(L.edgeLabel, lx, 14);
   }

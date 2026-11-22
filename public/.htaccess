@@ -1,0 +1,7 @@
+# SiteGround's Apache reads this for /sundial/. The root .htaccess skips its
+# strict no-script CSP under /sundial/, so Sundial sets its own CSP here:
+# Next.js static export needs 'self' and 'unsafe-inline' for hydration scripts
+# and styles, while blocking all network calls except GoatCounter's pixel.
+<IfModule mod_headers.c>
+  Header always set Content-Security-Policy "default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' https://gloriousworks.goatcounter.com; connect-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+</IfModule>

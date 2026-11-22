@@ -42,6 +42,11 @@
 @layer components {
   body { background: var(--ground); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.45; }
   ::selection { background: #FEC94E; color: #1E1E1E; }
+  .skip-link {
+    position: absolute; left: -9999px; top: 10px; z-index: 10; padding: 8px 16px; border-radius: 999px;
+    background: var(--ink); color: var(--ground); font: 600 14px var(--cond); text-transform: uppercase; letter-spacing: 0.06em; text-decoration: none;
+  }
+  .skip-link:focus-visible { left: 16px; outline: 2px solid var(--accent); outline-offset: 3px; }
   .wrap { max-width: 1200px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 
   /* Brand band: full on a first visit, a slim bar once there is a board to read. */
@@ -134,8 +139,9 @@
   .legend i.mid { width: 2px; height: 14px; background: var(--ink); border-radius: 0; }
   .legend i.both { height: 12px; background: color-mix(in srgb, var(--accent) 16%, transparent); box-shadow: inset 0 0 0 1.5px var(--accent); }
   .help { color: var(--muted); font-size: 15px; max-width: 58ch; margin: 0 0 8px; }
-  .site-footer { margin-top: 20px; border-top: 1px solid var(--rule); padding-block: 20px calc(32px + env(safe-area-inset-bottom, 0px)); color: var(--muted); font-size: 13px; }
-  .site-footer a { color: inherit; text-underline-offset: 3px; }
+  .site-footer { margin-top: 20px; border-top: 1px solid var(--rule); padding-block: 10px calc(22px + env(safe-area-inset-bottom, 0px)); color: var(--muted); font-size: 13px; }
+  .site-footer a { display: inline-block; padding: 10px 4px; color: inherit; text-underline-offset: 3px; }
+  .site-footer a:first-child { padding-left: 0; }
   .site-footer a:hover { color: var(--ink); }
   .counter { position: absolute; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
   .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--ground); padding: 10px 16px; border-radius: 8px; font-size: 14px; max-width: calc(100% - 32px); z-index: 5; box-shadow: var(--float); }

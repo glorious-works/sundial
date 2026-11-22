@@ -44,6 +44,7 @@ test.describe("spec acceptance table", () => {
     const line = "Mon 23 Nov, 07:00 London / 18:00 Sydney / 01:00 Chicago";
     await expect(page.getByTestId("copy-line")).toHaveText(line);
     await page.getByRole("button", { name: "Copy" }).click();
+    await expect(page.getByRole("button", { name: "Copied" })).toBeVisible();
     await expect(page.locator(".toast")).toHaveText("Copied");
     await expect(page.getByTestId("announce")).toHaveText("Copied");
     expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(line);
@@ -371,6 +372,8 @@ test.describe("static page", () => {
     expect(text).not.toMatch(/\b(Mon|Tue|Wed|Thu|Fri|Sat|Sun) \d{1,2} (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/);
     expect(text).not.toMatch(/Today in/);
     await expect(page.getByTestId("row")).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Glorious Works" })).toHaveAttribute("href", "https://glorious.works/");
+    await expect(page.getByRole("link", { name: "About Sundial" })).toHaveAttribute("href", "https://glorious.works/works/sundial/");
     await expect(page.getByRole("link", { name: "Made with AI: colophon" })).toHaveAttribute("href", "https://glorious.works/colophon/");
     // The page-view pixel names the path only, never a board.
     await expect(page.locator("img.counter")).toHaveAttribute("src", "https://gloriousworks.goatcounter.com/count?p=%2Fsundial%2F&t=Sundial");
