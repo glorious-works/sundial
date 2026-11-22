@@ -333,6 +333,22 @@ test.describe("editing and persistence", () => {
 });
 
 test.describe("static page", () => {
+  test("names its address and gives links a preview, on the page only", async ({ page, request }) => {
+    await page.goto("./");
+    const head = page.locator("head");
+    await expect(head.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://glorious.works/sundial/");
+    await expect(head.locator('meta[property="og:url"]')).toHaveAttribute("content", "https://glorious.works/sundial/");
+    await expect(head.locator('meta[property="og:title"]')).toHaveAttribute("content", "Sundial");
+    await expect(head.locator('meta[property="og:site_name"]')).toHaveAttribute("content", "Glorious Works");
+    await expect(head.locator('meta[name="twitter:card"]')).toHaveAttribute("content", "summary");
+    await expect(head.locator('meta[name="theme-color"]')).toHaveAttribute("content", "#FEC94E");
+    // The not-found page is not this address.
+    const notFound = await (await request.get("./404.html")).text();
+    expect(notFound).toContain('name="theme-color"');
+    expect(notFound).not.toContain('rel="canonical"');
+    expect(notFound).not.toContain('property="og:url"');
+  });
+
   test("the page-view pixel is not preloaded ahead of the page", async ({ request }) => {
     const html = await (await request.get("./")).text();
     expect(html).toContain("gloriousworks.goatcounter.com/count");

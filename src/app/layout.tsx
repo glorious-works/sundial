@@ -16,6 +16,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  // Signal Yellow, as on the site: tints a phone's browser bar to match the brand band.
+  themeColor: "#FEC94E",
 };
 
 // Page views, counted by GoatCounter's tracking pixel, as on the rest of glorious.works: one
