@@ -350,11 +350,18 @@ test.describe("static page", () => {
     expect(image.status()).toBe(200);
     expect(image.headers()["content-type"]).toContain("image/png");
     await expect(head.locator('meta[name="theme-color"]')).toHaveAttribute("content", "#FEC94E");
+    const schemaText = await page.locator('script[type="application/ld+json"]').textContent();
+    const schema = JSON.parse(schemaText!);
+    expect(schema["@type"]).toBe("SoftwareApplication");
+    expect(schema.name).toBe("Sundial");
+    expect(schema.url).toBe("https://glorious.works/sundial/");
+    expect(schema.publisher.name).toBe("Glorious Works");
     // The not-found page is not this address.
     const notFound = await (await request.get("./404.html")).text();
     expect(notFound).toContain('name="theme-color"');
     expect(notFound).not.toContain('rel="canonical"');
     expect(notFound).not.toContain('property="og:url"');
+    expect(notFound).not.toContain("application/ld+json");
   });
 
   test("the page-view pixel is not preloaded ahead of the page", async ({ request }) => {

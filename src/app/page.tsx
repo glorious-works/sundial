@@ -14,6 +14,33 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: "Sundial", description: DESCRIPTION },
 };
 
+const JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Sundial",
+  description: DESCRIPTION,
+  url: PAGE_URL,
+  mainEntityOfPage: "https://glorious.works/works/sundial/",
+  codeRepository: "https://github.com/glorious-works/sundial",
+  applicationCategory: "UtilitiesApplication",
+  operatingSystem: "Any",
+  inLanguage: "en-GB",
+  isAccessibleForFree: true,
+  offers: { "@type": "Offer", price: "0", priceCurrency: "GBP" },
+  publisher: {
+    "@type": "Organization",
+    "@id": "https://glorious.works/#organization",
+    name: "Glorious Works",
+    url: "https://glorious.works/",
+    logo: "https://glorious.works/apple-touch-icon.png",
+  },
+};
+
 export default function Home() {
-  return <Sundial />;
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
+      <Sundial />
+    </>
+  );
 }
