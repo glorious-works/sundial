@@ -8,6 +8,8 @@ const barlowCondensed = Barlow_Condensed({ subsets: ["latin"], weight: ["500", "
 const leagueGothic = League_Gothic({ subsets: ["latin"], weight: "400", variable: "--font-league-gothic" });
 
 export const metadata: Metadata = {
+  // The site's origin only: Next adds the basePath to the share image's address itself.
+  metadataBase: new URL("https://glorious.works"),
   title: "Sundial",
   description: "A time zone board where every row keeps its own date and every strip is coloured by the real sun over that city.",
 };

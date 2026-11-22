@@ -340,7 +340,14 @@ test.describe("static page", () => {
     await expect(head.locator('meta[property="og:url"]')).toHaveAttribute("content", "https://glorious.works/sundial/");
     await expect(head.locator('meta[property="og:title"]')).toHaveAttribute("content", "Sundial");
     await expect(head.locator('meta[property="og:site_name"]')).toHaveAttribute("content", "Glorious Works");
-    await expect(head.locator('meta[name="twitter:card"]')).toHaveAttribute("content", "summary");
+    await expect(head.locator('meta[name="twitter:card"]')).toHaveAttribute("content", "summary_large_image");
+    // The share image: under /sundial/, with a hash that changes with the file, and served here.
+    await expect(head.locator('meta[property="og:image"]')).toHaveAttribute("content", /^https:\/\/glorious\.works\/sundial\/opengraph-image\.png\?.+/);
+    await expect(head.locator('meta[property="og:image:width"]')).toHaveAttribute("content", "1200");
+    await expect(head.locator('meta[property="og:image:alt"]')).toHaveAttribute("content", /^The Sundial mark/);
+    const image = await request.get("./opengraph-image.png");
+    expect(image.status()).toBe(200);
+    expect(image.headers()["content-type"]).toContain("image/png");
     await expect(head.locator('meta[name="theme-color"]')).toHaveAttribute("content", "#FEC94E");
     // The not-found page is not this address.
     const notFound = await (await request.get("./404.html")).text();
